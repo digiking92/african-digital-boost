@@ -130,7 +130,9 @@ serve(async (req) => {
   }
 
   // Rate limiting by IP
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  // Use the last (rightmost) IP to prevent client-side X-Forwarded-For spoofing
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const ip = forwardedFor?.split(",").at(-1)?.trim() || "unknown";
   if (!checkRateLimit(ip)) {
     return new Response(JSON.stringify({ error: "Too many requests. Please wait a minute before trying again." }), {
       status: 429,
