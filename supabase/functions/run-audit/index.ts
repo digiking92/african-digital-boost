@@ -325,7 +325,7 @@ Return a JSON object with these exact keys:
 
     if (insertError) {
       console.error("Supabase insert error:", insertError);
-      throw new Error(`Failed to save audit: ${insertError.message}`);
+      throw new Error("Audit processing failed. Please try again.");
     }
 
     // Step 6: Return
