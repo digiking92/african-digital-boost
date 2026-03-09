@@ -24,9 +24,7 @@ const Results = () => {
 
     const fetchAudit = async () => {
       const { data, error } = await supabase
-        .from("audits")
-        .select("*")
-        .eq("share_token", shareToken)
+        .rpc("get_audit_by_share_token", { p_share_token: shareToken })
         .maybeSingle();
 
       if (error || !data) {
