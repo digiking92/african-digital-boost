@@ -182,10 +182,10 @@ serve(async (req) => {
 
     // Step 1: Google searches for the person
     const queries = [
-      full_name,
-      `${full_name} ${profession}`,
-      `${full_name} ${city}`,
-      `${full_name} LinkedIn`,
+      safeName,
+      `${safeName} ${safeProfession}`,
+      `${safeName} ${safeCity}`,
+      `${safeName} LinkedIn`,
     ];
 
     const searchPromises = queries.map(q => googleSearch(q, GOOGLE_API_KEY, GOOGLE_CX));
