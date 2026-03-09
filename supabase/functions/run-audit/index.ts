@@ -160,13 +160,25 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { full_name, profession, country, city } = await req.json();
+    const body = await req.json();
+    const full_name = String(body.full_name || "").trim().slice(0, 100);
+    const profession = String(body.profession || "").trim().slice(0, 100);
+    const country = String(body.country || "").trim().slice(0, 100);
+    const city = String(body.city || "").trim().slice(0, 100);
+
     if (!full_name || !profession || !country || !city) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Sanitize inputs: strip control characters and newlines for prompt safety
+    const sanitize = (s: string) => s.replace(/[\x00-\x1f\x7f]/g, "").replace(/[<>]/g, "");
+    const safeName = sanitize(full_name);
+    const safeProfession = sanitize(profession);
+    const safeCity = sanitize(city);
+    const safeCountry = sanitize(country);
 
     // Step 1: Google searches for the person
     const queries = [
