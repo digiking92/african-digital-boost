@@ -147,11 +147,16 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!GOOGLE_API_KEY) throw new Error("GOOGLE_CUSTOM_SEARCH_API_KEY not configured");
-    if (!GOOGLE_CX) throw new Error("GOOGLE_SEARCH_ENGINE_ID not configured");
-    if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY not configured");
-    if (!SUPABASE_URL) throw new Error("SUPABASE_URL not configured");
-    if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured");
+    if (!GOOGLE_API_KEY || !GOOGLE_CX || !GROQ_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing required environment variables:", {
+        GOOGLE_API_KEY: !!GOOGLE_API_KEY,
+        GOOGLE_CX: !!GOOGLE_CX,
+        GROQ_API_KEY: !!GROQ_API_KEY,
+        SUPABASE_URL: !!SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY: !!SUPABASE_SERVICE_ROLE_KEY,
+      });
+      throw new Error("Audit service is temporarily unavailable. Please try again later.");
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
