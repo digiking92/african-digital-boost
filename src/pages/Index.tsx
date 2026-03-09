@@ -108,6 +108,7 @@ const Index = () => {
             <Input
               id="city"
               placeholder="e.g. Lagos, Nairobi, Accra"
+              maxLength={100}
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
