@@ -183,7 +183,7 @@ serve(async (req) => {
 
     // Step 4: AI action plan via Groq
     const groqPayload = {
-      model: "llama3-70b-8192",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
