@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,6 +50,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        surface: "hsl(var(--surface))",
+        gold: "hsl(var(--gold))",
+        "gold-glow": "hsl(var(--gold-glow))",
+        tier: {
+          ghost: "hsl(var(--tier-ghost))",
+          shadow: "hsl(var(--tier-shadow))",
+          emerging: "hsl(var(--tier-emerging))",
+          visible: "hsl(var(--tier-visible))",
+          authority: "hsl(var(--tier-authority))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -65,25 +78,37 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-gold": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
+        },
+        "fill-bar": {
+          from: { width: "0%" },
+          to: { width: "100%" },
+        },
+        "fade-in-up": {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "score-fill": {
+          from: { strokeDashoffset: "283" },
+          to: { strokeDashoffset: "var(--score-offset)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-gold": "pulse-gold 2s ease-in-out infinite",
+        "fill-bar": "fill-bar 12s ease-in-out forwards",
+        "fade-in-up": "fade-in-up 0.6s ease-out forwards",
+        "score-fill": "score-fill 1.5s ease-out forwards",
       },
     },
   },
