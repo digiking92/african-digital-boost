@@ -14,10 +14,210 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audits: {
+        Row: {
+          action_plan: Json
+          breakdown: Json
+          city: string
+          competitors: Json
+          content_blueprint: Json
+          country: string
+          created_at: string | null
+          email: string | null
+          full_name: string
+          gaps: Json
+          id: string
+          profession: string
+          raw_search_results: Json | null
+          reaudit_consented: boolean | null
+          score: number
+          share_token: string
+          tier: string
+        }
+        Insert: {
+          action_plan?: Json
+          breakdown?: Json
+          city: string
+          competitors?: Json
+          content_blueprint?: Json
+          country: string
+          created_at?: string | null
+          email?: string | null
+          full_name: string
+          gaps?: Json
+          id?: string
+          profession: string
+          raw_search_results?: Json | null
+          reaudit_consented?: boolean | null
+          score: number
+          share_token: string
+          tier: string
+        }
+        Update: {
+          action_plan?: Json
+          breakdown?: Json
+          city?: string
+          competitors?: Json
+          content_blueprint?: Json
+          country?: string
+          created_at?: string | null
+          email?: string | null
+          full_name?: string
+          gaps?: Json
+          id?: string
+          profession?: string
+          raw_search_results?: Json | null
+          reaudit_consented?: boolean | null
+          score?: number
+          share_token?: string
+          tier?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          audit_id: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string | null
+          offer_interest: string | null
+          profession: string | null
+          score: number | null
+          source: string | null
+          tier: string | null
+        }
+        Insert: {
+          audit_id?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name?: string | null
+          offer_interest?: string | null
+          profession?: string | null
+          score?: number | null
+          source?: string | null
+          tier?: string | null
+        }
+        Update: {
+          audit_id?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string | null
+          offer_interest?: string | null
+          profession?: string | null
+          score?: number | null
+          source?: string | null
+          tier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reaudit_queue: {
+        Row: {
+          audit_id: string
+          created_at: string | null
+          email: string
+          id: string
+          scheduled_at: string
+          sent: boolean | null
+          sent_at: string | null
+        }
+        Insert: {
+          audit_id: string
+          created_at?: string | null
+          email: string
+          id?: string
+          scheduled_at: string
+          sent?: boolean | null
+          sent_at?: string | null
+        }
+        Update: {
+          audit_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          scheduled_at?: string
+          sent?: boolean | null
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reaudit_queue_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_events: {
+        Row: {
+          audit_id: string | null
+          created_at: string | null
+          id: string
+          platform: string
+        }
+        Insert: {
+          audit_id?: string | null
+          created_at?: string | null
+          id?: string
+          platform: string
+        }
+        Update: {
+          audit_id?: string | null
+          created_at?: string | null
+          id?: string
+          platform?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_events_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      audit_summary: {
+        Row: {
+          avg_score: number | null
+          country: string | null
+          day: string | null
+          emails_captured: number | null
+          profession: string | null
+          tier: string | null
+          total_audits: number | null
+        }
+        Relationships: []
+      }
+      leads_summary: {
+        Row: {
+          avg_score: number | null
+          country: string | null
+          latest_lead: string | null
+          offer_interest: string | null
+          total_leads: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
