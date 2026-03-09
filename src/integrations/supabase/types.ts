@@ -220,7 +220,34 @@ export type Database = {
       }
     }
     Functions: {
-      current_share_token: { Args: never; Returns: string }
+      get_audit_by_share_token: {
+        Args: { p_share_token: string }
+        Returns: {
+          action_plan: Json
+          breakdown: Json
+          city: string
+          competitors: Json
+          content_blueprint: Json
+          country: string
+          created_at: string | null
+          email: string | null
+          full_name: string
+          gaps: Json
+          id: string
+          profession: string
+          raw_search_results: Json | null
+          reaudit_consented: boolean | null
+          score: number
+          share_token: string
+          tier: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "audits"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never
