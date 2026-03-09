@@ -284,7 +284,7 @@ Return a JSON object with these exact keys:
     if (!groqResp.ok) {
       const errorText = await groqResp.text();
       console.error("Groq API error:", groqResp.status, errorText);
-      throw new Error(`Groq API failed [${groqResp.status}]: ${errorText}`);
+      throw new Error("Audit processing failed. Please try again.");
     }
 
     const groqData = await groqResp.json();
