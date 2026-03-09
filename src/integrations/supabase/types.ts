@@ -220,7 +220,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      current_share_token: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
