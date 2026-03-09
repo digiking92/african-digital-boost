@@ -196,8 +196,8 @@ serve(async (req) => {
 
     // Step 2: Competitor search
     const compQueries = [
-      `${profession} ${city}`,
-      `best ${profession} ${city}`,
+      `${safeProfession} ${safeCity}`,
+      `best ${safeProfession} ${safeCity}`,
     ];
     const compSearches = await Promise.all(compQueries.map(q => googleSearch(q, GOOGLE_API_KEY, GOOGLE_CX)));
     const compResults = compSearches.flatMap(r => r.items);
