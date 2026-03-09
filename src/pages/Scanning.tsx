@@ -56,7 +56,7 @@ const Scanning = () => {
         navigate(`/results/${data.share_token}`);
       } catch (err: any) {
         console.error("Audit error:", err);
-        setError(err.message || "Something went wrong. Please try again.");
+        setError("Something went wrong. Please try again.");
       }
     };
 
