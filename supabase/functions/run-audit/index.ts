@@ -343,7 +343,17 @@ Return a JSON object with these exact keys:
     );
   } catch (error: unknown) {
     console.error("run-audit error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
+    // Only pass through known safe messages; default to generic
+    const safeMessages = [
+      "Audit service is temporarily unavailable. Please try again later.",
+      "Audit processing failed. Please try again.",
+      "Missing required fields",
+      "Too many requests. Please wait a minute before trying again.",
+    ];
+    const rawMessage = error instanceof Error ? error.message : "";
+    const message = safeMessages.includes(rawMessage)
+      ? rawMessage
+      : "Something went wrong. Please try again later.";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
