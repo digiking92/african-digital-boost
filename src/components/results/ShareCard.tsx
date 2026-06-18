@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { AuditSection, AuditTitle } from "@/components/ui/audit-ui";
 
 interface ShareCardProps {
   score: number;
@@ -7,41 +8,41 @@ interface ShareCardProps {
   shareUrl: string;
 }
 
-export const ShareCard = ({ score, tier, name, shareUrl }: ShareCardProps) => {
-  const linkedinText = encodeURIComponent(
-    `I just ran a Google Presence Audit on DigitalSelf and scored ${score}/100 — I'm a "${tier}" online. 😅 If you're a professional in Africa and you've never checked how you appear on Google, you need to see this. Run yours free here 👇 ${shareUrl}`
-  );
+export const ShareCard = ({ score, tier, shareUrl }: ShareCardProps) => {
   const twitterText = encodeURIComponent(
-    `Just found out I'm a "${tier}" on Google (${score}/100). Every client I don't have online is finding someone else. Fixing that. You should check yours too 👇 ${shareUrl} #DigitalPresence #AfricanProfessionals`
+    `Just found out I'm a "${tier}" on Google (${score}/100). Every client I don't have online is finding someone else. Fixing that. You should check yours too 👇 ${shareUrl} #DigitalPresence #AfricanProfessionals`,
   );
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-4 text-center">
-      <h3 className="text-xl font-bold text-foreground">Challenge Your Network</h3>
+    <AuditSection className="text-center">
+      <AuditTitle>Challenge Your Network</AuditTitle>
 
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
         <Button
-          onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, "_blank")}
-          className="bg-[hsl(210,80%,45%)] hover:bg-[hsl(210,80%,40%)] text-white"
+          onClick={() =>
+            window.open(
+              `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+              "_blank",
+            )
+          }
+          className="brand-cta"
         >
           Share on LinkedIn
         </Button>
         <Button
           onClick={() => window.open(`https://twitter.com/intent/tweet?text=${twitterText}`, "_blank")}
-          variant="secondary"
+          className="bg-[#1a2d42] text-white border border-[#4ADE80]/25 hover:bg-[#243a52]"
         >
           Share on Twitter/X
         </Button>
         <Button
-          onClick={() => {
-            navigator.clipboard.writeText(shareUrl);
-          }}
+          onClick={() => navigator.clipboard.writeText(shareUrl)}
           variant="outline"
-          className="border-primary text-primary hover:bg-primary/10"
+          className="border-[#4ADE80]/40 text-[#4ADE80] hover:bg-[#4ADE80]/10 bg-transparent"
         >
           Copy Link
         </Button>
       </div>
-    </div>
+    </AuditSection>
   );
 };

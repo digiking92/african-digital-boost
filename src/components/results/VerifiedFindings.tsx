@@ -1,3 +1,11 @@
+import {
+  AuditBadge,
+  AuditBody,
+  AuditSection,
+  AuditSubtitle,
+  AuditTitle,
+} from "@/components/ui/audit-ui";
+
 export interface VerifiedFinding {
   text: string;
   source: string;
@@ -12,27 +20,23 @@ export const VerifiedFindings = ({ findings }: VerifiedFindingsProps) => {
   if (!findings.length) return null;
 
   return (
-    <div className="bg-card border border-emerald-500/30 rounded-xl p-6 space-y-4">
+    <AuditSection variant="verified">
       <div>
-        <span className="text-xs font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-          Verified facts
-        </span>
-        <h3 className="text-xl font-bold text-foreground mt-2">What We Confirmed</h3>
-        <p className="text-sm text-muted-foreground">
-          These come directly from Google search and profile checks — not AI guesses.
-        </p>
+        <AuditBadge>Verified facts</AuditBadge>
+        <AuditTitle>What We Confirmed</AuditTitle>
+        <AuditSubtitle>These come directly from Google search and profile checks, not AI guesses.</AuditSubtitle>
       </div>
       <ul className="space-y-3">
         {findings.map((finding, i) => (
-          <li key={i} className="flex gap-3 items-start text-sm">
-            <span className="text-emerald-400 shrink-0 mt-0.5">✓</span>
+          <li key={i} className="flex gap-3 items-start">
+            <span className="text-[#4ADE80] shrink-0 mt-0.5 font-bold">✓</span>
             <div>
-              <p className="text-foreground">{finding.text}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Source: {finding.source}</p>
+              <AuditBody>{finding.text}</AuditBody>
+              <p className="text-xs text-white/55 mt-1">Source: {finding.source}</p>
             </div>
           </li>
         ))}
       </ul>
-    </div>
+    </AuditSection>
   );
 };

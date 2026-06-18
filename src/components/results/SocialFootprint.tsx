@@ -1,3 +1,13 @@
+import {
+  AuditBadge,
+  AuditInnerCard,
+  AuditLink,
+  AuditMuted,
+  AuditSection,
+  AuditSubtitle,
+  AuditTitle,
+} from "@/components/ui/audit-ui";
+
 export interface SocialProfile {
   platform: string;
   label: string;
@@ -10,10 +20,10 @@ export interface SocialProfile {
 }
 
 const statusConfig: Record<SocialProfile["status"], { label: string; className: string }> = {
-  found: { label: "Profile found", className: "bg-emerald-500/20 text-emerald-300" },
-  not_found: { label: "Not found", className: "bg-red-500/20 text-red-300" },
-  blocked: { label: "Exists (limited view)", className: "bg-amber-500/20 text-amber-200" },
-  unknown: { label: "Could not verify", className: "bg-secondary text-muted-foreground" },
+  found: { label: "Profile found", className: "bg-[#4ADE80]/20 text-[#4ADE80] border border-[#4ADE80]/30" },
+  not_found: { label: "Not found", className: "bg-white/10 text-white/70 border border-white/20" },
+  blocked: { label: "Exists (limited view)", className: "bg-[#4ADE80]/10 text-white border border-[#4ADE80]/25" },
+  unknown: { label: "Could not verify", className: "bg-white/5 text-white/60 border border-white/15" },
 };
 
 interface SocialFootprintProps {
@@ -23,38 +33,34 @@ interface SocialFootprintProps {
 export const SocialFootprint = ({ profiles }: SocialFootprintProps) => {
   if (profiles.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-6 space-y-2">
-        <h3 className="text-xl font-bold text-foreground">Your Social Footprint</h3>
-        <p className="text-sm text-muted-foreground">
-          No handle provided — we only checked what Google shows. Add your @handle next time for a deeper social audit.
-        </p>
-      </div>
+      <AuditSection>
+        <AuditTitle>Your Social Footprint</AuditTitle>
+        <AuditMuted>
+          No handle provided. We only checked what Google shows. Add your @handle next time for a deeper social audit.
+        </AuditMuted>
+      </AuditSection>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+    <AuditSection variant="verified">
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-            Verified checks
-          </span>
-        </div>
-        <h3 className="text-xl font-bold text-foreground">Your Social Footprint</h3>
-        <p className="text-sm text-muted-foreground">
+        <AuditBadge>Verified checks</AuditBadge>
+        <AuditTitle>Your Social Footprint</AuditTitle>
+        <AuditSubtitle>
           We checked your profiles and whether Google surfaces them when people search your name.
-        </p>
+        </AuditSubtitle>
       </div>
 
       <div className="space-y-3">
         {profiles.map((profile) => {
           const status = statusConfig[profile.status];
           return (
-            <div key={profile.platform} className="rounded-lg border border-border p-4 space-y-2">
+            <AuditInnerCard key={profile.platform} className="space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-foreground">{profile.label}</p>
-                  <p className="text-sm text-muted-foreground">@{profile.handle}</p>
+                  <p className="font-semibold text-white">{profile.label}</p>
+                  <p className="text-sm text-white/65">@{profile.handle}</p>
                 </div>
                 <span className={`text-xs font-medium px-2 py-1 rounded-full shrink-0 ${status.className}`}>
                   {status.label}
@@ -62,29 +68,20 @@ export const SocialFootprint = ({ profiles }: SocialFootprintProps) => {
               </div>
 
               {profile.discoverabilityGap && (
-                <p className="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2">
-                  You have this profile, but Google doesn't show it when people search your name — a visibility gap we can fix.
+                <p className="text-xs text-white bg-[#1a3048] border border-[#4ADE80]/30 rounded-md px-3 py-2">
+                  You have this profile, but Google doesn&apos;t show it when people search your name. That is a visibility gap we can fix.
                 </p>
               )}
 
               {profile.foundInGoogle && (
-                <p className="text-xs text-emerald-300">
-                  ✓ This profile appears in Google search results
-                </p>
+                <p className="text-xs text-[#4ADE80]">✓ This profile appears in Google search results</p>
               )}
 
-              <a
-                href={profile.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline truncate block"
-              >
-                {profile.url}
-              </a>
-            </div>
+              <AuditLink href={profile.url}>{profile.url}</AuditLink>
+            </AuditInnerCard>
           );
         })}
       </div>
-    </div>
+    </AuditSection>
   );
 };

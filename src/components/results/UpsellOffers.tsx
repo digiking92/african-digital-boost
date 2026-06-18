@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { AuditInnerCard, AuditSection, AuditSubtitle, AuditTitle } from "@/components/ui/audit-ui";
 
 interface UpsellOffersProps {
   upsellHook?: string;
@@ -6,30 +7,28 @@ interface UpsellOffersProps {
 }
 
 export const UpsellOffers = ({ upsellHook, quickWin }: UpsellOffersProps) => (
-  <div className="space-y-4">
+  <div className="space-y-6">
     <div className="text-center space-y-2">
-      <h3 className="text-xl font-bold text-foreground">Want Us to Fix This For You?</h3>
-      <p className="text-sm text-muted-foreground">
+      <AuditTitle>Want Us to Fix This For You?</AuditTitle>
+      <AuditSubtitle>
         {upsellHook || "We specialise in building digital authority for African professionals"}
-      </p>
+      </AuditSubtitle>
       {quickWin && (
-        <p className="text-xs text-primary font-medium">
-          Start with: {quickWin}
-        </p>
+        <p className="text-xs text-[#4ADE80] font-medium">Start with: {quickWin}</p>
       )}
     </div>
 
     <div className="grid gap-4">
-      <div className="bg-card border-2 border-primary rounded-xl p-6 space-y-4 relative">
-        <span className="absolute -top-3 left-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+      <AuditSection variant="highlight" className="relative pt-8">
+        <span className="absolute -top-3 left-4 bg-[#4ADE80] text-[#0D1B2A] text-xs font-bold px-3 py-1 rounded-full">
           Most Popular
         </span>
         <div>
           <p className="text-2xl mb-1">🚀</p>
-          <h4 className="text-lg font-bold text-foreground">Done-For-You Visibility Package</h4>
-          <p className="text-sm text-muted-foreground mt-1">
-            We fix your Google positioning, optimise your social profiles, and make sure clients find you — not your competitors.
-          </p>
+          <h4 className="text-lg font-bold text-white">Done-For-You Visibility Package</h4>
+          <AuditSubtitle className="mt-1">
+            We fix your Google positioning, optimise your social profiles, and make sure clients find you, not your competitors.
+          </AuditSubtitle>
         </div>
         <ul className="space-y-2">
           {[
@@ -39,24 +38,24 @@ export const UpsellOffers = ({ upsellHook, quickWin }: UpsellOffersProps) => (
             "Monthly visibility re-audit included",
             "Dedicated strategist for African professionals",
           ].map((f, i) => (
-            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-              <span className="text-primary">✓</span> {f}
+            <li key={i} className="text-sm text-white/75 flex items-start gap-2">
+              <span className="text-[#4ADE80]">✓</span> {f}
             </li>
           ))}
         </ul>
-        <Button className="w-full bg-primary text-primary-foreground hover:bg-gold-glow text-base font-bold py-5">
+        <Button className="w-full brand-cta text-base py-5">
           Book a Free 15-Min Strategy Call
         </Button>
-      </div>
+      </AuditSection>
 
-      <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+      <AuditSection>
         <div>
-          <span className="text-xs bg-secondary text-muted-foreground px-3 py-1 rounded-full">Quick Win</span>
-          <p className="text-2xl mt-2 mb-1">🎯</p>
-          <h4 className="text-lg font-bold text-foreground">90-Day Visibility Strategy Session</h4>
-          <p className="text-sm text-muted-foreground mt-1">
+          <span className="text-xs bg-[#1a2d42] text-white/70 px-3 py-1 rounded-full border border-[#4ADE80]/15">Quick Win</span>
+          <p className="text-2xl mt-3 mb-1">🎯</p>
+          <h4 className="text-lg font-bold text-white">90-Day Visibility Strategy Session</h4>
+          <AuditSubtitle className="mt-1">
             One deep session. Leave with a clear system to get found on Google and social.
-          </p>
+          </AuditSubtitle>
         </div>
         <ul className="space-y-2">
           {[
@@ -65,15 +64,18 @@ export const UpsellOffers = ({ upsellHook, quickWin }: UpsellOffersProps) => (
             "Platform-by-platform positioning plan",
             "Delivered as PDF + action checklist",
           ].map((f, i) => (
-            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-              <span className="text-primary">✓</span> {f}
+            <li key={i} className="text-sm text-white/75 flex items-start gap-2">
+              <span className="text-[#4ADE80]">✓</span> {f}
             </li>
           ))}
         </ul>
-        <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10 text-base font-medium py-5">
+        <Button
+          variant="outline"
+          className="w-full border-[#4ADE80]/40 text-[#4ADE80] hover:bg-[#4ADE80]/10 bg-transparent text-base font-medium py-5"
+        >
           Book Your Strategy Session
         </Button>
-      </div>
+      </AuditSection>
     </div>
   </div>
 );

@@ -359,10 +359,10 @@ function buildBreakdownExplanations(
   const socialScore = breakdown.social_presence;
 
   let googleExplain = `${matchingCount} results match your name`;
-  if (breakdown.google_results >= 20) googleExplain += " — strong visibility";
-  else if (breakdown.google_results >= 10) googleExplain += " — moderate visibility";
-  else if (breakdown.google_results > 0) googleExplain += " — weak visibility";
-  else googleExplain += " — no clear matches";
+  if (breakdown.google_results >= 20) googleExplain += ". Strong visibility.";
+  else if (breakdown.google_results >= 10) googleExplain += ". Moderate visibility.";
+  else if (breakdown.google_results > 0) googleExplain += ". Weak visibility.";
+  else googleExplain += ". No clear matches.";
 
   let socialExplain = platforms.length > 0
     ? `Found ${platforms.join(", ")} in Google`
@@ -601,31 +601,31 @@ function computeQuickWin(
 
   if (score >= 80) {
     if (lowestKey === "content_footprint") {
-      return `Publish one in-depth ${profession} story from ${country} on LinkedIn — you're already visible; now cement authority with long-form content.`;
+      return `You should publish one in-depth ${profession} story from ${country} on LinkedIn. You're already visible; now cement your authority with long-form content.`;
     }
     if (lowestKey === "brand_clarity") {
-      return `Unify every bio to one line: "${profession} helping clients in ${city}" — you're findable; make the message identical everywhere.`;
+      return `You should unify every bio to one line: "${profession} helping clients in ${city}". You're findable; now make your message identical everywhere.`;
     }
-    return `Pitch one ${country} podcast or media outlet with a bold ${profession} take — you've outgrown basic profile setup.`;
+    return `You should pitch one ${country} podcast or media outlet with a bold ${profession} take. You've outgrown basic profile setup.`;
   }
 
   if (score >= 60) {
     const gapProfile = socialProfiles.find((p) => p.discoverabilityGap);
     if (gapProfile) {
-      return `Optimise ${gapProfile.label} (@${gapProfile.handle}) so it ranks when people search "${firstName}" — the profile exists but Google hides it.`;
+      return `You should optimise your ${gapProfile.label} (@${gapProfile.handle}) so it ranks when people search "${firstName}". The profile exists but Google hides it.`;
     }
-    return `Turn your best client result in ${city} into a named LinkedIn case study this week — you're visible; now show proof.`;
+    return `You should turn your best client result in ${city} into a named LinkedIn case study this week. You're visible; now show proof.`;
   }
 
   if (socialProfiles.some((p) => p.status === "not_found" || p.status === "unknown")) {
-    return `Set up and complete your LinkedIn profile with headline "${profession} | ${city}, ${country}" — it's the fastest win for ${firstName}.`;
+    return `You should set up and complete your LinkedIn profile with headline "${profession} | ${city}, ${country}". It's your fastest win right now.`;
   }
 
   if (gaps.includes("Low Google search visibility")) {
-    return `Create one Google-indexable page (LinkedIn featured section or simple site) titled "${firstName} — ${profession} in ${city}".`;
+    return `You should create one Google-indexable page (LinkedIn featured section or simple site) titled "${firstName}, ${profession} in ${city}".`;
   }
 
-  return `Post one ${profession} tip tied to ${city} on LinkedIn and Instagram this week — start building what Google can find.`;
+  return `You should post one ${profession} tip tied to ${city} on LinkedIn and Instagram this week. Start building what Google can find about you.`;
 }
 
 function scoreGoogleResults(results: SearchResult[], fullName: string): number {
@@ -702,6 +702,164 @@ function parseAiJson(content: string): Record<string, unknown> {
   }
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function thirdToSecondPerson(text: string): string {
+  return text
+    .replace(/\b(he|she)\s+has\b/gi, "you have")
+    .replace(/\b(he|she)\s+is\b/gi, "you are")
+    .replace(/\b(his|her)\s+/gi, "your ")
+    .replace(/\bhe's\b/gi, "you're")
+    .replace(/\bshe's\b/gi, "you're");
+}
+
+function rewritePassivePhrasing(text: string): string {
+  return text
+    .replace(/based on the available data,?\s*it is estimated that\s*/gi, "")
+    .replace(/it is estimated that\s*/gi, "")
+    .trim();
+}
+
+function replaceSubjectNameWithYou(text: string, firstName: string, fullName: string): string {
+  let result = text;
+  const names = [fullName, firstName]
+    .filter((n) => n.trim().length > 1)
+    .sort((a, b) => b.length - a.length);
+
+  for (const name of names) {
+    const esc = escapeRegex(name);
+    result = result.replace(new RegExp(`\\b${esc}\\s+is\\b`, "gi"), "You are");
+    result = result.replace(new RegExp(`\\b${esc}\\s+has\\b`, "gi"), "You have");
+    result = result.replace(new RegExp(`\\b${esc}\\s+was\\b`, "gi"), "You were");
+    result = result.replace(new RegExp(`\\b${esc}\\b`, "gi"), "you");
+  }
+  return result;
+}
+
+function fixYouVerbAgreement(text: string): string {
+  return text
+    .replace(/\bYou is\b/g, "You are")
+    .replace(/\byou is\b/g, "you are")
+    .replace(/\bYou has\b/g, "You have")
+    .replace(/\byou has\b/g, "you have")
+    .replace(/\bYou was\b/g, "You were")
+    .replace(/\byou was\b/g, "you were");
+}
+
+function replaceLongDashes(text: string): string {
+  return text
+    .replace(/\s*—\s*/g, ". ")
+    .replace(/(\d)\s*–\s*(\d)/g, "$1 to $2")
+    .replace(/\s*–\s*/g, ", ")
+    .replace(/\.\s+\./g, ".")
+    .trim();
+}
+
+function isValidEmail(email: string): boolean {
+  const trimmed = email.trim();
+  if (!trimmed || trimmed.length > 254) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed);
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function parseFromAddress(fromEmail: string, fromName: string): { address: string; name: string } {
+  const match = fromEmail.match(/^(.+?)\s*<([^>]+)>$/);
+  if (match) {
+    return { name: match[1].trim().replace(/^"|"$/g, ""), address: match[2].trim() };
+  }
+  return { address: fromEmail.trim(), name: fromName };
+}
+
+async function sendAuditReportEmail(params: {
+  zeptoApiKey: string;
+  fromEmail: string;
+  fromName: string;
+  toEmail: string;
+  firstName: string;
+  score: number;
+  tier: string;
+  reportUrl: string;
+}): Promise<boolean> {
+  const { zeptoApiKey, fromEmail, fromName, toEmail, firstName, score, tier, reportUrl } = params;
+  const subject = `${firstName}, your AuditME score is ${score}/100 (${tier})`;
+  const from = parseFromAddress(fromEmail, fromName);
+
+  const htmlbody = `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;background:#0D1B2A;color:#ffffff;padding:32px;border-radius:12px;">
+      <p style="color:#4ADE80;font-weight:700;font-size:14px;margin:0 0 8px;">AuditME</p>
+      <h1 style="margin:0 0 16px;font-size:24px;">Hi ${firstName}, your Google presence report is ready</h1>
+      <p style="color:rgba(255,255,255,0.85);line-height:1.6;">
+        You scored <strong style="color:#4ADE80;">${score}/100</strong> and you're currently rated as a
+        <strong style="color:#4ADE80;">${tier}</strong> online.
+      </p>
+      <p style="color:rgba(255,255,255,0.85);line-height:1.6;">
+        Your full report includes your score breakdown, named competitors, and a personalised action plan.
+      </p>
+      <p style="margin:28px 0;">
+        <a href="${reportUrl}" style="background:#4ADE80;color:#0D1B2A;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px;display:inline-block;">
+          View my full report
+        </a>
+      </p>
+      <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.5;">
+        If the button doesn't work, copy this link:<br/>
+        <a href="${reportUrl}" style="color:#4ADE80;">${reportUrl}</a>
+      </p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch("https://api.zeptomail.com/v1.1/email", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Zoho-enczapikey ${zeptoApiKey}`,
+      },
+      body: JSON.stringify({
+        from: { address: from.address, name: from.name },
+        to: [{ email_address: { address: toEmail, name: firstName } }],
+        subject,
+        htmlbody,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("ZeptoMail email failed:", response.status, errText);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("ZeptoMail email error:", err);
+    return false;
+  }
+}
+
+function polishAiText(text: string, firstName: string, fullName: string): string {
+  let result = text.trim().replace(/^you should\s+/i, "");
+  if (!result) return result;
+
+  const fn = escapeRegex(firstName);
+  const full = escapeRegex(fullName);
+  result = result.replace(new RegExp(`^${fn}\\s*,\\s*${full}\\b`, "i"), "You");
+  result = rewritePassivePhrasing(result);
+  result = replaceSubjectNameWithYou(result, firstName, fullName);
+  result = thirdToSecondPerson(result);
+  result = fixYouVerbAgreement(result);
+  result = replaceLongDashes(result);
+
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+function polishSourcedClaim(claim: string, firstName: string, fullName: string): string {
+  return polishAiText(claim, firstName, fullName);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -736,12 +894,20 @@ serve(async (req) => {
     const body = await req.json();
 
     const full_name = String(body.full_name || "").trim().slice(0, 100);
+    const email = normalizeEmail(String(body.email || ""));
     const profession = String(body.profession || "").trim().slice(0, 100);
     const country = String(body.country || "").trim().slice(0, 100);
     const city = String(body.city || "").trim().slice(0, 100);
 
-    if (!full_name || !profession || !country || !city) {
+    if (!full_name || !email || !profession || !country || !city) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return new Response(JSON.stringify({ error: "Please enter a valid email address." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -871,7 +1037,7 @@ serve(async (req) => {
     const highScoreRules = score >= 80
       ? `CRITICAL: Score is ${score}/100 (${tier}). User ALREADY has strong visibility. NEVER suggest claiming profiles, setting up basic social media, or "increasing visibility" from scratch. Focus on authority, media, and content depth.`
       : score >= 60
-      ? `User has moderate-strong visibility (${score}/100). Do not suggest basic profile setup — suggest specific growth tactics.`
+      ? `User has moderate-strong visibility (${score}/100). Do not suggest basic profile setup. Suggest specific growth tactics.`
       : "";
 
     const groqPayload = {
@@ -880,11 +1046,11 @@ serve(async (req) => {
         {
           role: "system",
           content:
-            `You are a digital visibility strategist for African professionals. Write UNIQUE advice for THIS person only. Ban generic tips like "post consistently", "optimize your profile", or "engage with your audience" unless you name a specific platform, competitor, city, or action. Respond only in valid JSON.`,
+            `You are a senior visibility coach speaking DIRECTLY to African professionals in a 1:1 consultation. Always use second person ("you", "your"), never third person ("he", "she", "they have"). Sound warm, confident, and specific like an expert who has reviewed their audit. Ban generic tips unless you name a platform, city, competitor, or concrete action. Never use em dashes in your output. Respond only in valid JSON.`,
         },
         {
           role: "user",
-          content: `Create a personalised visibility plan for ONE specific person. Every action and post idea must reference their name (${firstName}), profession (${safeProfession}), city (${safeCity}), country (${safeCountry}), a gap below, OR a named competitor.
+          content: `Create a personalised visibility plan speaking DIRECTLY to ${firstName}. Every sentence should feel like you are in the room telling them what to do.
 
 Name: <user_input>${safeName}</user_input>
 Profession: <user_input>${safeProfession}</user_input>
@@ -894,9 +1060,9 @@ Score: ${score}/100 (${tier})
 Gaps: ${gaps.join(", ") || "None"}
 
 Verified Google results for them:
-${googlePreviewForAi.map((r) => `#${r.index} ${r.title} — ${r.snippet}`).join("\n") || "None"}
+${googlePreviewForAi.map((r) => `#${r.index} ${r.title}: ${r.snippet}`).join("\n") || "None"}
 
-Verified competitors from Google (USE THESE NAMES — do not invent competitors):
+Verified competitors from Google (USE THESE NAMES; do not invent competitors):
 ${competitorsForAi || "None found"}
 
 Social audit:
@@ -907,29 +1073,40 @@ ${highScoreRules}
 Pre-computed quick win (use this exact text for biggest_quick_win field):
 "${computedQuickWin}"
 
-RULES:
-- action_plan items must be specific (e.g. "Turn your ${safeCity} client win into a LinkedIn carousel" NOT "post more content")
+VOICE RULES (STRICT; violations make the output unusable):
+- NEVER write "${safeName} has" or "${firstName} has". Always use "You have" or "Your profile shows"
+- NEVER use he/she/his/her when referring to the person. Only use "you" and "your"
+- NEVER repeat their name at the start of a sentence if you already address them (bad: "${firstName}, ${safeName} has...". Good: "You have...")
+- interpretation_summary MUST start with: "Here's what stands out about your presence:" then 2-3 sentences using only "you/your"
+- discovery_estimate MUST use "you/your" throughout. Tell them how strangers perceive THEM
+- sourced_claims: each claim is a fact about the reader. Start with "You have", "Your", or "You're listed on"
+- action_plan items MUST start with "You should..." or a direct imperative
+- competitor_themes: tell them what to learn from named competitors using "you should"
+- NEVER use em dashes (—) anywhere in the JSON output
+
+CONTENT RULES:
+- action_plan items must be specific (e.g. "You should turn your ${safeCity} client win into a LinkedIn carousel" NOT "post more content")
 - first_5_posts titles must include "${firstName}" OR "${safeCity}" OR "${safeProfession}"
 - competitor_themes must name at least 2 competitors from the list above
-- Do NOT return a competitors array — competitors are already verified separately
+- Do NOT return a competitors array. Competitors are already verified separately
 
 Return JSON:
 {
   "action_plan": {
-    "week_1": [ 4-5 hyper-specific actions for ${firstName} ],
+    "week_1": [ 4-5 actions starting with "You should..." for ${firstName} ],
     "month_1": [ 4-5 actions ],
     "month_3": [ 4-5 actions ]
   },
   "content_blueprint": {
     "content_types": [ 3 objects: { "type", "example_headline" (must mention ${firstName} or ${safeCity}), "platform", "frequency" } ],
-    "competitor_themes": [ 3 strings naming real competitors and what they post ],
+    "competitor_themes": [ 3 strings telling ${firstName} what named competitors post and what to do about it ],
     "first_5_posts": [ 5 objects: { "title", "platform", "hook_line" } ]
   },
-  "sourced_claims": [ 3-5 objects: { "claim", "source" } ],
-  "interpretation_summary": "2 sentences unique to ${firstName}",
-  "discovery_estimate": "2 sentences based only on findable data",
+  "sourced_claims": [ 3-5 objects: { "claim" (use "You..."), "source" } ],
+  "interpretation_summary": "Start with 'Here's what stands out about your presence:' then 2-3 sentences. Example tone: 'You already have X. What you're missing is Y. I'd focus on Z this week.'",
+  "discovery_estimate": "2 sentences max. Example: 'You're scoring 76/100. People can find you, but you don't yet look like the go-to expert in Lagos. Your next move is showing proof, not just presence.'",
   "biggest_quick_win": "${computedQuickWin.replace(/"/g, '\\"')}",
-  "upsell_hook": "one sentence referencing their specific gap"
+  "upsell_hook": "one sentence speaking directly to ${firstName} about their specific gap"
 }`,
         },
       ],
@@ -958,19 +1135,34 @@ Return JSON:
 
     const competitors = enrichCompetitorsWithAi(competitorsFromSearch, aiPlan.competitors);
 
+    const rawClaims = Array.isArray(aiPlan.sourced_claims) ? aiPlan.sourced_claims : [];
     const positioning = {
       verified_findings: verifiedFindings,
-      sourced_claims: Array.isArray(aiPlan.sourced_claims) ? aiPlan.sourced_claims : [],
-      interpretation_summary: String(aiPlan.interpretation_summary || aiPlan.diagnosis_summary || ""),
-      discovery_estimate: String(aiPlan.discovery_estimate || aiPlan.ai_visibility_summary || ""),
+      sourced_claims: rawClaims.map((item: { claim?: string; source?: string }) => ({
+        claim: polishSourcedClaim(String(item.claim || ""), firstName, safeName),
+        source: String(item.source || ""),
+      })).filter((item: { claim: string }) => item.claim.trim()),
+      interpretation_summary: polishAiText(
+        String(aiPlan.interpretation_summary || aiPlan.diagnosis_summary || ""),
+        firstName,
+        safeName,
+      ),
+      discovery_estimate: polishAiText(
+        String(aiPlan.discovery_estimate || aiPlan.ai_visibility_summary || ""),
+        firstName,
+        safeName,
+      ),
       biggest_quick_win: computedQuickWin,
-      upsell_hook: String(aiPlan.upsell_hook || ""),
+      upsell_hook: polishAiText(String(aiPlan.upsell_hook || ""), firstName, safeName),
     };
 
     const shareToken = generateToken(10);
+    const siteUrl = (Deno.env.get("SITE_URL") || "https://auditme.app").replace(/\/$/, "");
+    const reportUrl = `${siteUrl}/results/${shareToken}`;
 
-    const { error: insertError } = await supabase.from("audits").insert({
+    const { data: auditRow, error: insertError } = await supabase.from("audits").insert({
       full_name,
+      email,
       profession,
       country,
       city,
@@ -985,6 +1177,7 @@ Return JSON:
       },
       gaps,
       share_token: shareToken,
+      reaudit_consented: true,
       raw_search_results: {
         googleResults: googlePreview,
         compResults: compResults.slice(0, 5),
@@ -997,11 +1190,63 @@ Return JSON:
           breakdownExplanations,
         },
       },
-    });
+    }).select("id").single();
 
-    if (insertError) {
+    if (insertError || !auditRow) {
       console.error("Supabase insert error:", insertError);
       throw new Error("Audit processing failed. Please try again.");
+    }
+
+    const reportSentAt = new Date().toISOString();
+    const ZEPTOMAIL_API_KEY = Deno.env.get("ZEPTOMAIL_API_KEY");
+    const ZEPTOMAIL_FROM_EMAIL = Deno.env.get("ZEPTOMAIL_FROM_EMAIL") || "reports@auditme.app";
+    const ZEPTOMAIL_FROM_NAME = Deno.env.get("ZEPTOMAIL_FROM_NAME") || "AuditME";
+    let emailSent = false;
+
+    if (ZEPTOMAIL_API_KEY) {
+      emailSent = await sendAuditReportEmail({
+        zeptoApiKey: ZEPTOMAIL_API_KEY,
+        fromEmail: ZEPTOMAIL_FROM_EMAIL,
+        fromName: ZEPTOMAIL_FROM_NAME,
+        toEmail: email,
+        firstName,
+        score,
+        tier,
+        reportUrl,
+      });
+    } else {
+      console.warn("ZEPTOMAIL_API_KEY not set; skipping report email.");
+    }
+
+    const { error: leadError } = await supabase.from("leads").insert({
+      audit_id: auditRow.id,
+      email,
+      name: full_name,
+      profession,
+      city,
+      country,
+      score,
+      tier,
+      source: "survey",
+      follow_up_status: "new",
+      report_url: reportUrl,
+      report_sent_at: emailSent ? reportSentAt : null,
+    });
+
+    if (leadError) {
+      console.error("Lead insert error:", leadError);
+    }
+
+    const scheduledAt = new Date();
+    scheduledAt.setDate(scheduledAt.getDate() + 30);
+    const { error: reauditError } = await supabase.from("reaudit_queue").insert({
+      audit_id: auditRow.id,
+      email,
+      scheduled_at: scheduledAt.toISOString(),
+    });
+
+    if (reauditError) {
+      console.error("Reaudit queue error:", reauditError);
     }
 
     return new Response(

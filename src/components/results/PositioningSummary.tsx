@@ -1,19 +1,33 @@
+import { polishExpertNarrative, polishVerifiedClaim, toDirectAdvice } from "@/lib/expertCopy";
+import {
+  AuditBadge,
+  AuditBody,
+  AuditInnerCard,
+  AuditLabel,
+  AuditSection,
+  AuditSubtitle,
+  AuditTitle,
+} from "@/components/ui/audit-ui";
+
 interface SourcedClaim {
   claim: string;
   source: string;
 }
 
 interface PositioningSummaryProps {
+  firstName: string;
+  fullName: string;
   interpretationSummary?: string;
   discoveryEstimate?: string;
   biggestQuickWin?: string;
   sourcedClaims?: SourcedClaim[];
-  /** @deprecated legacy audits */
   diagnosisSummary?: string;
   aiVisibilitySummary?: string;
 }
 
 export const PositioningSummary = ({
+  firstName,
+  fullName,
   interpretationSummary,
   discoveryEstimate,
   biggestQuickWin,
@@ -23,61 +37,56 @@ export const PositioningSummary = ({
 }: PositioningSummaryProps) => {
   const interpretation = interpretationSummary || diagnosisSummary;
   const discovery = discoveryEstimate || aiVisibilitySummary;
+  const expertRead = interpretation ? polishExpertNarrative(interpretation, firstName, fullName) : "";
+  const perception = discovery ? polishExpertNarrative(discovery, firstName, fullName) : "";
+  const quickWin = biggestQuickWin ? toDirectAdvice(biggestQuickWin) : "";
 
-  if (!interpretation && !discovery && !biggestQuickWin && !sourcedClaims?.length) return null;
+  if (!expertRead && !perception && !quickWin && !sourcedClaims?.length) return null;
 
   return (
-    <div className="bg-card border border-amber-500/30 rounded-xl p-6 space-y-5">
+    <AuditSection variant="highlight">
       <div>
-        <span className="text-xs font-bold uppercase tracking-wide text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
-          AI interpretation
-        </span>
-        <h3 className="text-xl font-bold text-foreground mt-2">Our Expert Read</h3>
-        <p className="text-sm text-muted-foreground">
-          Generated from verified data above — suggestions, not guaranteed facts. Always click sources to confirm.
-        </p>
+        <AuditBadge variant="outline">Your expert read</AuditBadge>
+        <AuditTitle>{firstName}, here&apos;s what I see</AuditTitle>
+        <AuditSubtitle>
+          I reviewed your data. Here&apos;s my honest read. Click any source to verify.
+        </AuditSubtitle>
       </div>
 
       {sourcedClaims && sourcedClaims.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Claims with sources</p>
-          <ul className="space-y-2">
+          <AuditLabel>What I found about you online</AuditLabel>
+          <ul className="space-y-3">
             {sourcedClaims.map((item, i) => (
-              <li key={i} className="text-sm border-l-2 border-amber-500/40 pl-3">
-                <p className="text-foreground">{item.claim}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">→ {item.source}</p>
+              <li key={i} className="border-l-2 border-[#4ADE80]/50 pl-3">
+                <AuditBody>{polishVerifiedClaim(item.claim, firstName, fullName)}</AuditBody>
+                <p className="text-xs text-white/55 mt-1">Source: {item.source}</p>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {interpretation && (
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Positioning summary</p>
-          <p className="text-sm text-foreground leading-relaxed">{interpretation}</p>
-        </div>
+      {expertRead && (
+        <AuditInnerCard>
+          <AuditLabel>My take on your positioning</AuditLabel>
+          <AuditBody className="mt-2">{expertRead}</AuditBody>
+        </AuditInnerCard>
       )}
 
-      {discovery && (
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Estimated public perception
-          </p>
-          <p className="text-xs text-muted-foreground mb-1">
-            Not a live Google AI Overview — estimated from findable public data only.
-          </p>
-          <p className="text-sm text-foreground leading-relaxed">{discovery}</p>
-        </div>
+      {perception && (
+        <AuditInnerCard>
+          <AuditLabel>How strangers likely see you on Google</AuditLabel>
+          <AuditBody className="mt-2">{perception}</AuditBody>
+        </AuditInnerCard>
       )}
 
-      {biggestQuickWin && (
-        <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-1">Suggested quick win</p>
-          <p className="text-xs text-muted-foreground mb-1">Based on your score and verified gaps — not generic advice.</p>
-          <p className="text-sm font-medium text-foreground">{biggestQuickWin}</p>
+      {quickWin && (
+        <div className="rounded-xl border border-[#4ADE80]/45 bg-[#4ADE80]/10 p-4">
+          <AuditLabel>What you should do this week</AuditLabel>
+          <p className="text-sm font-medium text-white mt-2 leading-relaxed">{quickWin}</p>
         </div>
       )}
-    </div>
+    </AuditSection>
   );
 };

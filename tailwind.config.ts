@@ -16,12 +16,14 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
       },
-      colors: {
+        colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        navy: "#0D1B2A",
+        green: "#4ADE80",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -51,8 +53,6 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         surface: "hsl(var(--surface))",
-        gold: "hsl(var(--gold))",
-        "gold-glow": "hsl(var(--gold-glow))",
         tier: {
           ghost: "hsl(var(--tier-ghost))",
           shadow: "hsl(var(--tier-shadow))",
@@ -85,7 +85,7 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "pulse-gold": {
+        "pulse-brand": {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.6" },
         },
@@ -105,7 +105,7 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-gold": "pulse-gold 2s ease-in-out infinite",
+        "pulse-brand": "pulse-brand 2s ease-in-out infinite",
         "fill-bar": "fill-bar 12s ease-in-out forwards",
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "score-fill": "score-fill 1.5s ease-out forwards",

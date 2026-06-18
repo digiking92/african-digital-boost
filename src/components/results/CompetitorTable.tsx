@@ -1,3 +1,13 @@
+import {
+  AuditBadge,
+  AuditInnerCard,
+  AuditLink,
+  AuditMuted,
+  AuditSection,
+  AuditSubtitle,
+  AuditTitle,
+} from "@/components/ui/audit-ui";
+
 export interface Competitor {
   name: string;
   score: number;
@@ -32,32 +42,28 @@ const CompetitorCard = ({ c, index }: { c: Competitor; index: number }) => {
     <>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs text-muted-foreground font-mono">Competitor #{index + 1}</p>
-          <p className="font-semibold text-foreground">{c.name}</p>
+          <p className="text-xs text-white/55 font-mono">Competitor #{index + 1}</p>
+          <p className="font-semibold text-white">{c.name}</p>
         </div>
-        <span className="bg-secondary text-foreground px-2 py-0.5 rounded-full text-xs font-medium shrink-0">
+        <span className="bg-[#1a2d42] text-white px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 border border-[#4ADE80]/20">
           ~{c.score}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
         {c.platform && (
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">{c.platform}</span>
+          <span className="text-xs bg-[#4ADE80]/15 text-[#4ADE80] px-2 py-0.5 rounded">{c.platform}</span>
         )}
-        {c.handle && (
-          <span className="text-xs text-muted-foreground font-mono">{c.handle}</span>
-        )}
+        {c.handle && <span className="text-xs text-white/60 font-mono">{c.handle}</span>}
         {c.source === "google" && (
-          <span className="text-xs text-emerald-400">Google verified</span>
+          <span className="text-xs text-[#4ADE80]">Google verified</span>
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground line-clamp-3">{c.insight}</p>
-      {hasLink && (
-        <p className="text-xs text-primary truncate">{c.link}</p>
-      )}
+      <AuditMuted className="line-clamp-3">{c.insight}</AuditMuted>
+      {hasLink && c.link && <AuditLink href={c.link}>{c.link}</AuditLink>}
       {!hasLink && (
-        <p className="text-xs text-amber-400">No direct profile link available</p>
+        <p className="text-xs text-white/50">No direct profile link available</p>
       )}
     </>
   );
@@ -68,7 +74,7 @@ const CompetitorCard = ({ c, index }: { c: Competitor; index: number }) => {
         href={c.link}
         target="_blank"
         rel="noopener noreferrer"
-        className="block rounded-lg border border-border bg-secondary/30 p-4 hover:border-primary/30 transition-colors space-y-2"
+        className="block rounded-xl border border-[#4ADE80]/20 bg-[#0D1B2A]/60 p-4 hover:border-[#4ADE80]/45 transition-colors space-y-2"
       >
         {content}
       </a>
@@ -76,48 +82,42 @@ const CompetitorCard = ({ c, index }: { c: Competitor; index: number }) => {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-2">
-      {content}
-    </div>
+    <AuditInnerCard className="space-y-2">{content}</AuditInnerCard>
   );
 };
 
 export const CompetitorTable = ({ competitors, city, userName, userScore, competitorQuery }: CompetitorTableProps) => {
   if (!competitors || competitors.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-6 space-y-2">
-        <h3 className="text-xl font-bold text-foreground">Who's Winning in Your Space</h3>
+      <AuditSection>
+        <AuditTitle>Who&apos;s Winning in Your Space</AuditTitle>
         {competitorQuery && (
-          <p className="text-xs text-muted-foreground font-mono">Searches: {competitorQuery}</p>
+          <p className="text-xs text-white/55 font-mono">Searches: {competitorQuery}</p>
         )}
-        <p className="text-muted-foreground text-sm">
-          No individual competitors with public profile links surfaced yet. Try adding your city and a more specific profession, or we couldn't find LinkedIn/Instagram profiles in your market.
-        </p>
-      </div>
+        <AuditMuted>
+          No individual competitors with public profile links surfaced yet. Try adding your city and a more specific profession, or we couldn&apos;t find LinkedIn/Instagram profiles in your market.
+        </AuditMuted>
+      </AuditSection>
     );
   }
 
   return (
-    <div className="bg-card border border-emerald-500/30 rounded-xl p-6 space-y-4">
+    <AuditSection variant="verified">
       <div>
-        <span className="text-xs font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-          Verified from Google
-        </span>
-        <h3 className="text-xl font-bold text-foreground mt-2">Who's Winning in {city}</h3>
-        <p className="text-sm text-muted-foreground">
-          {competitors.length} named professionals with real profile links — click to verify on their platform.
-        </p>
+        <AuditBadge>Verified from Google</AuditBadge>
+        <AuditTitle>Who&apos;s Winning in {city}</AuditTitle>
+        <AuditSubtitle>
+          {competitors.length} named professionals with real profile links. Click to verify on their platform.
+        </AuditSubtitle>
         {competitorQuery && (
-          <p className="text-xs text-muted-foreground font-mono mt-1">
-            Searches: {competitorQuery}
-          </p>
+          <p className="text-xs text-white/55 font-mono mt-2">Searches: {competitorQuery}</p>
         )}
       </div>
 
-      <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
+      <div className="rounded-xl border-2 border-[#4ADE80]/45 bg-[#4ADE80]/10 p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-semibold text-primary">{userName} (You)</p>
-          <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs font-bold">{userScore}/100</span>
+          <p className="font-semibold text-[#4ADE80]">{userName} (You)</p>
+          <span className="bg-[#4ADE80] text-[#0D1B2A] px-2.5 py-0.5 rounded-full text-xs font-bold">{userScore}/100</span>
         </div>
       </div>
 
@@ -126,6 +126,6 @@ export const CompetitorTable = ({ competitors, city, userName, userScore, compet
           <CompetitorCard key={`${c.link}-${i}`} c={c} index={i} />
         ))}
       </div>
-    </div>
+    </AuditSection>
   );
 };

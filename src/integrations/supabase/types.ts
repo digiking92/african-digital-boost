@@ -81,10 +81,14 @@ export type Database = {
           country: string | null
           created_at: string | null
           email: string
+          follow_up_status: string
           id: string
           name: string | null
+          notes: string | null
           offer_interest: string | null
           profession: string | null
+          report_sent_at: string | null
+          report_url: string | null
           score: number | null
           source: string | null
           tier: string | null
@@ -95,10 +99,14 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           email: string
+          follow_up_status?: string
           id?: string
           name?: string | null
+          notes?: string | null
           offer_interest?: string | null
           profession?: string | null
+          report_sent_at?: string | null
+          report_url?: string | null
           score?: number | null
           source?: string | null
           tier?: string | null
@@ -109,10 +117,14 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           email?: string
+          follow_up_status?: string
           id?: string
           name?: string | null
+          notes?: string | null
           offer_interest?: string | null
           profession?: string | null
+          report_sent_at?: string | null
+          report_url?: string | null
           score?: number | null
           source?: string | null
           tier?: string | null

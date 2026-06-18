@@ -1,3 +1,5 @@
+import { AuditInnerCard, AuditLabel } from "@/components/ui/audit-ui";
+
 export interface QueryRun {
   query: string;
   type: "name" | "profession" | "city" | "competitors";
@@ -22,37 +24,36 @@ const queryLabels: Record<QueryRun["type"], string> = {
 export const AuditTransparency = ({
   searchedAt,
   queriesRun,
-  competitorQuery,
   city,
   country,
 }: AuditTransparencyProps) => {
   if (!queriesRun?.length && !searchedAt) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-secondary/30 p-4 space-y-3 text-sm">
-      <p className="font-semibold text-foreground">How this audit was run</p>
+    <AuditInnerCard className="space-y-3 text-sm">
+      <p className="font-semibold text-white">How this audit was run</p>
       {searchedAt && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-white/60">
           Searched: {new Date(searchedAt).toLocaleString()} · Location context: {city}, {country}
         </p>
       )}
       {queriesRun && queriesRun.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Exact Google queries</p>
-          <ul className="space-y-1">
+        <div className="space-y-2">
+          <AuditLabel>Exact Google queries</AuditLabel>
+          <ul className="space-y-1.5">
             {queriesRun.map((q, i) => (
-              <li key={i} className="text-xs font-mono text-foreground/90 flex flex-wrap gap-x-2">
-                <span className="text-muted-foreground">{queryLabels[q.type]}:</span>
-                <span>"{q.query}"</span>
-                <span className="text-muted-foreground">({q.resultCount} results)</span>
+              <li key={i} className="text-xs font-mono text-white/85 flex flex-wrap gap-x-2">
+                <span className="text-white/55">{queryLabels[q.type]}:</span>
+                <span>&quot;{q.query}&quot;</span>
+                <span className="text-white/55">({q.resultCount} results)</span>
               </li>
             ))}
           </ul>
         </div>
       )}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-white/55">
         Scores use rules on these results. Interpretation below is AI-generated from this data.
       </p>
-    </div>
+    </AuditInnerCard>
   );
 };

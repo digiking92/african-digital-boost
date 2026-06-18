@@ -19,6 +19,7 @@ import { ReauditCapture } from "@/components/results/ReauditCapture";
 import type { Tables, Json } from "@/integrations/supabase/types";
 import type { GoogleResult } from "@/components/results/GooglePositioning";
 import type { QueryRun } from "@/components/results/AuditTransparency";
+import { PageShell } from "@/components/PageShell";
 import { filterRealCompetitors, hasLegacyCompetitorData } from "@/lib/competitorUtils";
 
 function parseJsonField<T>(value: Json | null | undefined, fallback: T): T {
@@ -85,9 +86,11 @@ const Results = () => {
 
   if (loading || !audit) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground animate-pulse-gold">Loading your results...</div>
-      </div>
+      <PageShell>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-white/70 animate-pulse-brand">Loading your results...</div>
+        </div>
+      </PageShell>
     );
   }
 
@@ -138,15 +141,15 @@ const Results = () => {
   const shareUrl = `${window.location.origin}/results/${audit.share_token}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageShell>
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-12">
         {staleCompetitorData && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+          <div className="alert-warning">
             This audit used an older competitor format (article titles, not real people). Run a new audit to get named professionals with profile links.
           </div>
         )}
         {searchMayHaveFailed && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+          <div className="alert-warning">
             We could not retrieve search data for this audit. Add SERPER_API_KEY in Supabase Edge Function secrets, then run a new audit.
           </div>
         )}
@@ -177,6 +180,8 @@ const Results = () => {
           competitorQuery={auditMeta.competitorQuery}
         />
         <PositioningSummary
+          firstName={firstName}
+          fullName={audit.full_name}
           interpretationSummary={positioning.interpretation_summary}
           discoveryEstimate={positioning.discovery_estimate}
           biggestQuickWin={positioning.biggest_quick_win}
@@ -189,6 +194,7 @@ const Results = () => {
         <div id="plan" />
         {actionPlan && (
           <ActionPlan
+            firstName={firstName}
             actionPlan={actionPlan}
             profession={audit.profession}
             city={audit.city}
@@ -196,14 +202,19 @@ const Results = () => {
           />
         )}
         {contentBlueprint && (
-          <ContentBlueprint blueprint={contentBlueprint} profession={audit.profession} />
+          <ContentBlueprint
+            blueprint={contentBlueprint}
+            profession={audit.profession}
+            firstName={firstName}
+            fullName={audit.full_name}
+          />
         )}
         <EffortCallout />
         <UpsellOffers upsellHook={positioning.upsell_hook} quickWin={positioning.biggest_quick_win} />
         <Testimonials />
-        <ReauditCapture auditId={audit.id} />
+        <ReauditCapture existingEmail={audit.email} />
       </div>
-    </div>
+    </PageShell>
   );
 };
 

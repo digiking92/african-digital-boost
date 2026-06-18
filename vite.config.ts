@@ -11,6 +11,20 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/api/run-audit": {
+        target: "https://azsubeqomrvigujzhpyf.supabase.co",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/run-audit/, "/functions/v1/run-audit"),
+      },
+      "/api/admin-dashboard": {
+        target: "https://azsubeqomrvigujzhpyf.supabase.co",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/admin-dashboard/, "/functions/v1/admin-dashboard"),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

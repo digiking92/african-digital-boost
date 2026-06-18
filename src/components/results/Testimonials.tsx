@@ -1,3 +1,5 @@
+import { AuditInnerCard, AuditMuted, AuditTitle } from "@/components/ui/audit-ui";
+
 const testimonials = [
   {
     name: "Chidi Eze",
@@ -17,23 +19,23 @@ const testimonials = [
 
 export const Testimonials = () => (
   <div className="space-y-4">
-    <h3 className="text-xl font-bold text-foreground text-center">Professionals We've Helped</h3>
+    <AuditTitle>Professionals We&apos;ve Helped</AuditTitle>
     <div className="grid gap-4">
       {testimonials.map((t, i) => (
-        <div key={i} className="bg-card border border-border rounded-xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
+        <AuditInnerCard key={i} className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="font-semibold text-foreground">{t.name}</p>
-              <p className="text-xs text-muted-foreground">{t.profession}</p>
+              <p className="font-semibold text-white">{t.name}</p>
+              <p className="text-xs text-white/55">{t.profession}</p>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="bg-destructive/20 text-destructive px-2 py-0.5 rounded-full">{t.scoreBefore}</span>
-              <span className="text-muted-foreground">→</span>
-              <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{t.scoreAfter}</span>
+            <div className="flex items-center gap-2 text-xs shrink-0">
+              <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded-full">{t.scoreBefore}</span>
+              <span className="text-white/40">→</span>
+              <span className="bg-[#4ADE80]/20 text-[#4ADE80] px-2 py-0.5 rounded-full font-semibold">{t.scoreAfter}</span>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground italic">"{t.quote}"</p>
-        </div>
+          <AuditMuted className="italic">&quot;{t.quote}&quot;</AuditMuted>
+        </AuditInnerCard>
       ))}
     </div>
   </div>
