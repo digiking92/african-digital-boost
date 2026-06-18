@@ -19,6 +19,7 @@ import { ReauditCapture } from "@/components/results/ReauditCapture";
 import type { Tables, Json } from "@/integrations/supabase/types";
 import type { GoogleResult } from "@/components/results/GooglePositioning";
 import type { QueryRun } from "@/components/results/AuditTransparency";
+import { filterRealCompetitors, hasLegacyCompetitorData } from "@/lib/competitorUtils";
 
 function parseJsonField<T>(value: Json | null | undefined, fallback: T): T {
   if (value == null) return fallback;
@@ -92,16 +93,22 @@ const Results = () => {
 
   const firstName = audit.full_name.split(" ")[0];
   const breakdown = parseJsonField<Record<string, number>>(audit.breakdown, {});
-  const competitors = parseJsonField<Array<{
-    name: string;
-    score: number;
-    insight: string;
-    link?: string;
-    platform?: string;
-    handle?: string;
-    source?: string;
-  }>>(audit.competitors, [])
-    .filter((competitor) => competitor?.name?.trim());
+  const competitors = filterRealCompetitors(
+    parseJsonField<Array<{
+      name: string;
+      score: number;
+      insight: string;
+      link?: string;
+      platform?: string;
+      handle?: string;
+      source?: string;
+    }>>(audit.competitors, []),
+  );
+  const rawCompetitors = parseJsonField<Array<{ name: string; score: number | string }>>(
+    audit.competitors,
+    [],
+  );
+  const staleCompetitorData = hasLegacyCompetitorData(rawCompetitors);
   const actionPlan = parseJsonField<{ week_1: string[]; month_1: string[]; month_3: string[] }>(
     audit.action_plan,
     { week_1: [], month_1: [], month_3: [] },
@@ -133,6 +140,11 @@ const Results = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-12">
+        {staleCompetitorData && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+            This audit used an older competitor format (article titles, not real people). Run a new audit to get named professionals with profile links.
+          </div>
+        )}
         {searchMayHaveFailed && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
             We could not retrieve search data for this audit. Add SERPER_API_KEY in Supabase Edge Function secrets, then run a new audit.

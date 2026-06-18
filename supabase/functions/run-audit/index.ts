@@ -547,6 +547,39 @@ function buildCompetitorsFromSearch(
   return competitors;
 }
 
+async function discoverCompetitors(
+  initialResults: SearchResult[],
+  fullName: string,
+  userScore: number,
+  safeProfession: string,
+  safeCity: string,
+  safeCountry: string,
+  serperKey: string,
+): Promise<{ competitors: CompetitorRecord[]; extraQueries: string[] }> {
+  let competitors = buildCompetitorsFromSearch(initialResults, fullName, userScore);
+  const extraQueries: string[] = [];
+
+  if (competitors.length >= 3) {
+    return { competitors, extraQueries };
+  }
+
+  const fallbackQueries = [
+    `${safeProfession} ${safeCity} site:linkedin.com/in`,
+    `${safeProfession} ${safeCountry} site:linkedin.com/in`,
+    `${safeProfession} ${safeCity} ${safeCountry} instagram`,
+  ];
+
+  for (const query of fallbackQueries) {
+    if (competitors.length >= 5) break;
+    extraQueries.push(query);
+    const search = await serperSearch(query, serperKey);
+    const merged = dedupeByLink([...initialResults, ...search.items]);
+    competitors = buildCompetitorsFromSearch(merged, fullName, userScore);
+  }
+
+  return { competitors, extraQueries };
+}
+
 function enrichCompetitorsWithAi(
   searchCompetitors: CompetitorRecord[],
   aiCompetitors: unknown,
@@ -798,7 +831,17 @@ serve(async (req) => {
     const score = Object.values(breakdown).reduce((a, b) => a + b, 0);
     const tier = getTier(score);
 
-    const competitorsFromSearch = buildCompetitorsFromSearch(compResults, full_name, score);
+    const competitorsFromSearch = (
+      await discoverCompetitors(
+        compResults,
+        full_name,
+        score,
+        safeProfession,
+        safeCity,
+        safeCountry,
+        SERPER_API_KEY,
+      )
+    ).competitors;
     const competitorsForAi = competitorsFromSearch.map((c, i) =>
       `#${i + 1} ${c.name} | ${c.platform || "Web"} ${c.handle || ""} | ${c.link} | ${c.insight}`
     ).join("\n");
