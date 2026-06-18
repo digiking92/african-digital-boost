@@ -1,6 +1,6 @@
 const metrics = [
   { label: "Google Search Results", key: "google_results", max: 25 },
-  { label: "Social Media Presence", key: "social_presence", max: 25 },
+  { label: "Social Media & Discoverability", key: "social_presence", max: 25 },
   { label: "Content & Thought Leadership", key: "content_footprint", max: 25 },
   { label: "Brand Clarity & Consistency", key: "brand_clarity", max: 25 },
 ];

@@ -4,12 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 const steps = [
   { icon: "🔍", text: "Searching Google for your name..." },
-  { icon: "📊", text: "Analysing your search result quality..." },
-  { icon: "🔗", text: "Checking LinkedIn and social profiles..." },
-  { icon: "🗺️", text: "Looking for Google Business Profile..." },
-  { icon: "📰", text: "Scanning African media mentions..." },
+  { icon: "📱", text: "Checking your social profiles..." },
+  { icon: "📊", text: "Analysing how you're positioned online..." },
   { icon: "🏆", text: "Benchmarking against competitors in your city..." },
-  { icon: "🤖", text: "Generating your personalised action plan..." },
+  { icon: "🤖", text: "Building your personalised visibility plan..." },
 ];
 
 const Scanning = () => {
@@ -49,14 +47,24 @@ const Scanning = () => {
           body: formData,
         });
 
-        if (fnError) throw fnError;
-        if (!data?.share_token) throw new Error("No share token returned");
+        const response = data as { share_token?: string; error?: string } | null;
+
+        if (fnError) {
+          throw new Error(response?.error || fnError.message);
+        }
+        if (response?.error) {
+          throw new Error(response.error);
+        }
+        if (!response?.share_token) {
+          throw new Error("No share token returned");
+        }
 
         sessionStorage.removeItem("auditFormData");
-        navigate(`/results/${data.share_token}`);
-      } catch (err: any) {
+        navigate(`/results/${response.share_token}`);
+      } catch (err: unknown) {
         console.error("Audit error:", err);
-        setError("Something went wrong. Please try again.");
+        const message = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+        setError(message);
       }
     };
 

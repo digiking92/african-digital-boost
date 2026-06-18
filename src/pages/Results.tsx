@@ -3,6 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ScoreHero } from "@/components/results/ScoreHero";
 import { ScoreBreakdown } from "@/components/results/ScoreBreakdown";
+import { GooglePositioning } from "@/components/results/GooglePositioning";
+import { SocialFootprint, type SocialProfile } from "@/components/results/SocialFootprint";
+import { PositioningSummary } from "@/components/results/PositioningSummary";
 import { CompetitorTable } from "@/components/results/CompetitorTable";
 import { ShareCard } from "@/components/results/ShareCard";
 import { ActionPlan } from "@/components/results/ActionPlan";
@@ -11,7 +14,34 @@ import { EffortCallout } from "@/components/results/EffortCallout";
 import { UpsellOffers } from "@/components/results/UpsellOffers";
 import { Testimonials } from "@/components/results/Testimonials";
 import { ReauditCapture } from "@/components/results/ReauditCapture";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Json } from "@/integrations/supabase/types";
+import type { GoogleResult } from "@/components/results/GooglePositioning";
+
+function parseJsonField<T>(value: Json | null | undefined, fallback: T): T {
+  if (value == null) return fallback;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
+}
+
+interface RawSearchData {
+  googleResults?: GoogleResult[];
+  nameResults?: GoogleResult[];
+  compResults?: GoogleResult[];
+  socialProfiles?: SocialProfile[];
+}
+
+interface PositioningData {
+  diagnosis_summary?: string;
+  ai_visibility_summary?: string;
+  biggest_quick_win?: string;
+  upsell_hook?: string;
+}
 
 const Results = () => {
   const { shareToken } = useParams();
@@ -48,25 +78,54 @@ const Results = () => {
   }
 
   const firstName = audit.full_name.split(" ")[0];
-  const breakdown = audit.breakdown as Record<string, number>;
-  const competitors = audit.competitors as Array<{ name: string; score: number; insight: string }>;
-  const actionPlan = audit.action_plan as { week_1: string[]; month_1: string[]; month_3: string[] };
-  const contentBlueprint = audit.content_blueprint as {
+  const breakdown = parseJsonField<Record<string, number>>(audit.breakdown, {});
+  const competitors = parseJsonField<Array<{ name: string; score: number; insight: string }>>(audit.competitors, [])
+    .filter((competitor) => competitor?.name?.trim());
+  const actionPlan = parseJsonField<{ week_1: string[]; month_1: string[]; month_3: string[] }>(
+    audit.action_plan,
+    { week_1: [], month_1: [], month_3: [] },
+  );
+  const contentBlueprint = parseJsonField<{
     content_types: Array<{ type: string; example_headline: string; platform: string; frequency: string }>;
     competitor_themes: string[];
     first_5_posts: Array<{ title: string; platform: string; hook_line: string }>;
-  };
+    positioning?: PositioningData;
+  }>(audit.content_blueprint, {
+    content_types: [],
+    competitor_themes: [],
+    first_5_posts: [],
+  });
+  const rawSearch = parseJsonField<RawSearchData>(audit.raw_search_results, {});
+  const googleResults = rawSearch.googleResults ?? rawSearch.nameResults ?? [];
+  const socialProfiles = rawSearch.socialProfiles ?? [];
+  const positioning = contentBlueprint.positioning ?? {};
+
+  const searchMayHaveFailed = audit.score === 0
+    && Object.values(breakdown).every((value) => value === 0)
+    && googleResults.length === 0;
+
   const shareUrl = `${window.location.origin}/results/${audit.share_token}`;
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-12">
+        {searchMayHaveFailed && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+            We could not retrieve search data for this audit. Add SERPER_API_KEY in Supabase Edge Function secrets, then run a new audit.
+          </div>
+        )}
         <ScoreHero firstName={firstName} score={audit.score} tier={audit.tier} />
+        <PositioningSummary
+          diagnosisSummary={positioning.diagnosis_summary}
+          aiVisibilitySummary={positioning.ai_visibility_summary}
+          biggestQuickWin={positioning.biggest_quick_win}
+        />
+        <GooglePositioning results={googleResults} fullName={audit.full_name} />
+        <SocialFootprint profiles={socialProfiles} />
         <ScoreBreakdown breakdown={breakdown} />
         <CompetitorTable competitors={competitors} city={audit.city} userName={audit.full_name} userScore={audit.score} />
         <ShareCard score={audit.score} tier={audit.tier} name={audit.full_name} shareUrl={shareUrl} />
-        
-        {/* Screen 4 content */}
+
         <div id="plan" />
         {actionPlan && (
           <ActionPlan
@@ -80,7 +139,7 @@ const Results = () => {
           <ContentBlueprint blueprint={contentBlueprint} profession={audit.profession} />
         )}
         <EffortCallout />
-        <UpsellOffers />
+        <UpsellOffers upsellHook={positioning.upsell_hook} quickWin={positioning.biggest_quick_win} />
         <Testimonials />
         <ReauditCapture auditId={audit.id} />
       </div>
