@@ -20,9 +20,12 @@ export const ActionPlan = ({ actionPlan, profession, city, country }: ActionPlan
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-xl font-bold text-foreground">Your Personalised Visibility Plan</h3>
+        <span className="text-xs font-bold uppercase tracking-wide text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+          AI-generated plan
+        </span>
+        <h3 className="text-xl font-bold text-foreground mt-2">Your Personalised Visibility Plan</h3>
         <p className="text-sm text-muted-foreground">
-          Built specifically for a {profession} in {city}, {country}
+          Built for a {profession} in {city}, {country} — based on your audit data, not a generic template.
         </p>
       </div>
 

@@ -92,7 +92,15 @@ const Results = () => {
 
   const firstName = audit.full_name.split(" ")[0];
   const breakdown = parseJsonField<Record<string, number>>(audit.breakdown, {});
-  const competitors = parseJsonField<Array<{ name: string; score: number; insight: string }>>(audit.competitors, [])
+  const competitors = parseJsonField<Array<{
+    name: string;
+    score: number;
+    insight: string;
+    link?: string;
+    platform?: string;
+    handle?: string;
+    source?: string;
+  }>>(audit.competitors, [])
     .filter((competitor) => competitor?.name?.trim());
   const actionPlan = parseJsonField<{ week_1: string[]; month_1: string[]; month_3: string[] }>(
     audit.action_plan,

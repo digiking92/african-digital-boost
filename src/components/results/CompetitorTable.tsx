@@ -1,7 +1,11 @@
-interface Competitor {
+export interface Competitor {
   name: string;
   score: number;
   insight: string;
+  link?: string;
+  platform?: string;
+  handle?: string;
+  source?: string;
 }
 
 interface CompetitorTableProps {
@@ -16,58 +20,79 @@ export const CompetitorTable = ({ competitors, city, userName, userScore, compet
   if (!competitors || competitors.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl p-6 space-y-2">
-        <h3 className="text-xl font-bold text-foreground">How You Compare in {city}</h3>
+        <h3 className="text-xl font-bold text-foreground">Who's Winning in Your Space</h3>
         {competitorQuery && (
-          <p className="text-xs text-muted-foreground font-mono">Search used: "{competitorQuery}"</p>
+          <p className="text-xs text-muted-foreground font-mono">Searches: {competitorQuery}</p>
         )}
         <p className="text-muted-foreground text-sm">
-          No direct competitors found in your city — you have a first-mover advantage. Use it.
+          No direct competitors surfaced in Google for your profession and location — you may have a first-mover advantage.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+    <div className="bg-card border border-emerald-500/30 rounded-xl p-6 space-y-4">
       <div>
-        <h3 className="text-xl font-bold text-foreground">How You Compare in {city}</h3>
-        <p className="text-sm text-muted-foreground">We found professionals in your field to benchmark against</p>
+        <span className="text-xs font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+          Verified from Google
+        </span>
+        <h3 className="text-xl font-bold text-foreground mt-2">Who's Winning in {city}</h3>
+        <p className="text-sm text-muted-foreground">
+          {competitors.length} professionals doing similar work — pulled from live search results with links you can verify.
+        </p>
         {competitorQuery && (
           <p className="text-xs text-muted-foreground font-mono mt-1">
-            Search used: "{competitorQuery}"
+            Searches: {competitorQuery}
           </p>
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left py-2 text-muted-foreground font-medium">Name</th>
-              <th className="text-center py-2 text-muted-foreground font-medium">Score</th>
-              <th className="text-left py-2 text-muted-foreground font-medium">What They're Doing</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* User row */}
-            <tr className="border-b border-primary/30 bg-primary/5">
-              <td className="py-3 font-semibold text-primary">{userName} (You)</td>
-              <td className="py-3 text-center">
-                <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs font-bold">{userScore}</span>
-              </td>
-              <td className="py-3 text-muted-foreground">—</td>
-            </tr>
-            {competitors.map((c, i) => (
-              <tr key={i} className="border-b border-border">
-                <td className="py-3 text-foreground">{c.name}</td>
-                <td className="py-3 text-center">
-                  <span className="bg-secondary text-foreground px-2 py-0.5 rounded-full text-xs font-medium">{c.score}</span>
-                </td>
-                <td className="py-3 text-muted-foreground text-xs">{c.insight}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* You */}
+      <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-semibold text-primary">{userName} (You)</p>
+          <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs font-bold">{userScore}/100</span>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {competitors.map((c, i) => (
+          <a
+            key={c.link || i}
+            href={c.link || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-lg border border-border bg-secondary/30 p-4 hover:border-primary/30 transition-colors space-y-2"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground font-mono">Competitor #{i + 1}</p>
+                <p className="font-semibold text-foreground">{c.name}</p>
+              </div>
+              <span className="bg-secondary text-foreground px-2 py-0.5 rounded-full text-xs font-medium shrink-0">
+                ~{c.score}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {c.platform && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">{c.platform}</span>
+              )}
+              {c.handle && (
+                <span className="text-xs text-muted-foreground font-mono">{c.handle}</span>
+              )}
+              {c.source === "google" && (
+                <span className="text-xs text-emerald-400">Google verified</span>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground line-clamp-2">{c.insight}</p>
+            {c.link && (
+              <p className="text-xs text-primary truncate">{c.link}</p>
+            )}
+          </a>
+        ))}
       </div>
     </div>
   );

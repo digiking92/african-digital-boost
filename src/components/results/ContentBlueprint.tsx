@@ -9,9 +9,17 @@ interface ContentBlueprintProps {
 
 export const ContentBlueprint = ({ blueprint, profession }: ContentBlueprintProps) => (
   <div className="space-y-6">
-    <h3 className="text-xl font-bold text-foreground">
-      What Content to Put Out (For {profession}s)
-    </h3>
+    <div>
+      <span className="text-xs font-bold uppercase tracking-wide text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+        AI-generated
+      </span>
+      <h3 className="text-xl font-bold text-foreground mt-2">
+        Content Ideas for {profession}s Like You
+      </h3>
+      <p className="text-sm text-muted-foreground">
+        Tailored to your audit — references your market and competitors where possible.
+      </p>
+    </div>
 
     {/* Content types */}
     {blueprint.content_types?.length > 0 && (
