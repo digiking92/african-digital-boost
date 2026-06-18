@@ -74,6 +74,7 @@ export const PositioningSummary = ({
       {biggestQuickWin && (
         <div className="rounded-lg bg-primary/10 border border-primary/20 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-1">Suggested quick win</p>
+          <p className="text-xs text-muted-foreground mb-1">Based on your score and verified gaps — not generic advice.</p>
           <p className="text-sm font-medium text-foreground">{biggestQuickWin}</p>
         </div>
       )}

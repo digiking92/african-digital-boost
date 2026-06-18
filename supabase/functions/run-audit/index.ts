@@ -407,6 +407,9 @@ const JUNK_COMPETITOR_PATTERNS = [
   /\d+\s+(best|top)/i,
   /best\s+\d+/i,
   /top\s+\d+/i,
+  /\btop\b/i,
+  /\bbest\b/i,
+  /\bleading\b/i,
   /wikipedia/i,
   /indeed\.com/i,
   /glassdoor/i,
@@ -419,7 +422,47 @@ const JUNK_COMPETITOR_PATTERNS = [
   /\bsalary\b/i,
   /courses?\./i,
   /certification/i,
+  /\b(companies|company|firms|firm|agencies|agency|consulting firms?)\b/i,
+  /\blist of\b/i,
+  /clutch\.co/i,
+  /sortlist/i,
+  /goodfirms/i,
 ];
+
+const COMPANY_TITLE_WORDS = /\b(companies|company|firms|firm|agencies|agency|services|solutions|consulting|list of|directory)\b/i;
+
+function isPersonalProfileUrl(link: string): boolean {
+  const lower = link.toLowerCase();
+  if (lower.includes("linkedin.com/in/")) return true;
+  if (/instagram\.com\/[^/]+\/?$/.test(lower)) return true;
+  if (/twitter\.com\/[^/]+\/?$/.test(lower) || /x\.com\/[^/]+\/?$/.test(lower)) return true;
+  if (/facebook\.com\/[^/]+\/?$/.test(lower) && !lower.includes("/groups/")) return true;
+  if (lower.includes("tiktok.com/@")) return true;
+  if (lower.includes("youtube.com/@") || lower.includes("youtube.com/c/") || lower.includes("youtube.com/channel/")) return true;
+  return false;
+}
+
+function looksLikePersonName(name: string): boolean {
+  if (!name || COMPANY_TITLE_WORDS.test(name)) return false;
+  if (/\btop\b|\bbest\b|\bleading\b|\bpopular\b|\d/.test(name)) return false;
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 5) return false;
+  return words.every((w) => /^[A-Za-z'.-]{2,}$/.test(w));
+}
+
+function isLikelyPersonCompetitor(result: SearchResult, fullName: string): boolean {
+  const title = result.title.toLowerCase();
+  const link = result.link.toLowerCase();
+  if (JUNK_COMPETITOR_PATTERNS.some((p) => p.test(title) || p.test(link))) return false;
+  if (resultMatchesName(result, fullName)) return false;
+  if (!result.title.trim() || !result.link.trim()) return false;
+
+  const personalUrl = isPersonalProfileUrl(link);
+  if (!personalUrl) return false;
+
+  const name = parseCompetitorName(result);
+  return looksLikePersonName(name) || link.includes("linkedin.com/in/");
+}
 
 function extractLinkMeta(link: string): { platform?: string; handle?: string } {
   try {
@@ -450,19 +493,6 @@ function extractLinkMeta(link: string): { platform?: string; handle?: string } {
   } catch {
     return {};
   }
-}
-
-function isLikelyPersonCompetitor(result: SearchResult, fullName: string): boolean {
-  const title = result.title.toLowerCase();
-  const link = result.link.toLowerCase();
-  if (JUNK_COMPETITOR_PATTERNS.some((p) => p.test(title) || p.test(link))) return false;
-  if (resultMatchesName(result, fullName)) return false;
-  if (!result.title.trim() || result.title.length < 3) return false;
-  const listicleTitle = /^\d+\s+|best\s+\d+|top\s+\d+|list of/i.test(result.title);
-  const personalLink = ["linkedin.com/in/", "instagram.com/", "twitter.com/", "x.com/", "facebook.com/", "tiktok.com/"]
-    .some((d) => link.includes(d));
-  if (listicleTitle && !personalLink) return false;
-  return true;
 }
 
 function parseCompetitorName(result: SearchResult): string {
@@ -521,22 +551,48 @@ function enrichCompetitorsWithAi(
   searchCompetitors: CompetitorRecord[],
   aiCompetitors: unknown,
 ): CompetitorRecord[] {
-  if (!Array.isArray(aiCompetitors) || searchCompetitors.length === 0) {
-    return searchCompetitors;
+  return searchCompetitors;
+}
+
+function computeQuickWin(
+  score: number,
+  breakdown: Record<string, number>,
+  gaps: string[],
+  socialProfiles: SocialProfile[],
+  firstName: string,
+  profession: string,
+  city: string,
+  country: string,
+): string {
+  const lowestKey = (Object.entries(breakdown).sort((a, b) => a[1] - b[1])[0] || ["", 0])[0];
+
+  if (score >= 80) {
+    if (lowestKey === "content_footprint") {
+      return `Publish one in-depth ${profession} story from ${country} on LinkedIn — you're already visible; now cement authority with long-form content.`;
+    }
+    if (lowestKey === "brand_clarity") {
+      return `Unify every bio to one line: "${profession} helping clients in ${city}" — you're findable; make the message identical everywhere.`;
+    }
+    return `Pitch one ${country} podcast or media outlet with a bold ${profession} take — you've outgrown basic profile setup.`;
   }
 
-  return searchCompetitors.map((comp) => {
-    const aiMatch = (aiCompetitors as Array<{ name?: string; insight?: string }>).find((ai) => {
-      if (!ai?.name) return false;
-      const a = ai.name.toLowerCase();
-      const b = comp.name.toLowerCase();
-      return a.includes(b) || b.includes(a) || a.split(" ")[0] === b.split(" ")[0];
-    });
-    return {
-      ...comp,
-      insight: aiMatch?.insight?.trim() ? aiMatch.insight : comp.insight,
-    };
-  });
+  if (score >= 60) {
+    const gapProfile = socialProfiles.find((p) => p.discoverabilityGap);
+    if (gapProfile) {
+      return `Optimise ${gapProfile.label} (@${gapProfile.handle}) so it ranks when people search "${firstName}" — the profile exists but Google hides it.`;
+    }
+    return `Turn your best client result in ${city} into a named LinkedIn case study this week — you're visible; now show proof.`;
+  }
+
+  if (socialProfiles.some((p) => p.status === "not_found" || p.status === "unknown")) {
+    return `Set up and complete your LinkedIn profile with headline "${profession} | ${city}, ${country}" — it's the fastest win for ${firstName}.`;
+  }
+
+  if (gaps.includes("Low Google search visibility")) {
+    return `Create one Google-indexable page (LinkedIn featured section or simple site) titled "${firstName} — ${profession} in ${city}".`;
+  }
+
+  return `Post one ${profession} tip tied to ${city} on LinkedIn and Instagram this week — start building what Google can find.`;
 }
 
 function scoreGoogleResults(results: SearchResult[], fullName: string): number {
@@ -677,8 +733,9 @@ serve(async (req) => {
       `${safeName} ${safeCity}`,
     ];
     const competitorQueries = [
-      `${safeProfession} ${safeCity} ${safeCountry}`,
-      `top ${safeProfession} ${safeCountry}`,
+      `site:linkedin.com/in ${safeProfession} ${safeCountry}`,
+      `${safeProfession} ${safeCity} ${safeCountry} linkedin`,
+      `site:instagram.com ${safeProfession} ${safeCountry}`,
     ];
 
     const personQueryLabels: QueryRun["type"][] = ["name", "profession", "city"];
@@ -764,6 +821,16 @@ serve(async (req) => {
       ).join("\n")
       : "No social handles provided";
 
+    const computedQuickWin = computeQuickWin(
+      score, breakdown, gaps, socialProfiles, firstName, safeProfession, safeCity, safeCountry,
+    );
+
+    const highScoreRules = score >= 80
+      ? `CRITICAL: Score is ${score}/100 (${tier}). User ALREADY has strong visibility. NEVER suggest claiming profiles, setting up basic social media, or "increasing visibility" from scratch. Focus on authority, media, and content depth.`
+      : score >= 60
+      ? `User has moderate-strong visibility (${score}/100). Do not suggest basic profile setup — suggest specific growth tactics.`
+      : "";
+
     const groqPayload = {
       model: "llama-3.3-70b-versatile",
       messages: [
@@ -792,6 +859,11 @@ ${competitorsForAi || "None found"}
 Social audit:
 ${socialSummary}
 
+${highScoreRules}
+
+Pre-computed quick win (use this exact text for biggest_quick_win field):
+"${computedQuickWin}"
+
 RULES:
 - action_plan items must be specific (e.g. "Turn your ${safeCity} client win into a LinkedIn carousel" NOT "post more content")
 - first_5_posts titles must include "${firstName}" OR "${safeCity}" OR "${safeProfession}"
@@ -813,7 +885,7 @@ Return JSON:
   "sourced_claims": [ 3-5 objects: { "claim", "source" } ],
   "interpretation_summary": "2 sentences unique to ${firstName}",
   "discovery_estimate": "2 sentences based only on findable data",
-  "biggest_quick_win": "one specific action for ${firstName} this week",
+  "biggest_quick_win": "${computedQuickWin.replace(/"/g, '\\"')}",
   "upsell_hook": "one sentence referencing their specific gap"
 }`,
         },
@@ -848,7 +920,7 @@ Return JSON:
       sourced_claims: Array.isArray(aiPlan.sourced_claims) ? aiPlan.sourced_claims : [],
       interpretation_summary: String(aiPlan.interpretation_summary || aiPlan.diagnosis_summary || ""),
       discovery_estimate: String(aiPlan.discovery_estimate || aiPlan.ai_visibility_summary || ""),
-      biggest_quick_win: String(aiPlan.biggest_quick_win || ""),
+      biggest_quick_win: computedQuickWin,
       upsell_hook: String(aiPlan.upsell_hook || ""),
     };
 
