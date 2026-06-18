@@ -35,6 +35,11 @@ export const SocialFootprint = ({ profiles }: SocialFootprintProps) => {
   return (
     <div className="bg-card border border-border rounded-xl p-6 space-y-4">
       <div>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xs font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+            Verified checks
+          </span>
+        </div>
         <h3 className="text-xl font-bold text-foreground">Your Social Footprint</h3>
         <p className="text-sm text-muted-foreground">
           We checked your profiles and whether Google surfaces them when people search your name.

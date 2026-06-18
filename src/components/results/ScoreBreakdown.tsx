@@ -7,15 +7,20 @@ const metrics = [
 
 interface ScoreBreakdownProps {
   breakdown: Record<string, number>;
+  explanations?: Record<string, string>;
 }
 
-export const ScoreBreakdown = ({ breakdown }: ScoreBreakdownProps) => (
+export const ScoreBreakdown = ({ breakdown, explanations }: ScoreBreakdownProps) => (
   <div className="space-y-4">
-    <h3 className="text-xl font-bold text-foreground">What We Checked</h3>
-    <div className="space-y-3">
+    <div>
+      <h3 className="text-xl font-bold text-foreground">Score Breakdown</h3>
+      <p className="text-sm text-muted-foreground">Calculated from verified search data using fixed rules.</p>
+    </div>
+    <div className="space-y-4">
       {metrics.map((m) => {
         const value = breakdown?.[m.key] ?? 0;
         const pct = (value / m.max) * 100;
+        const explanation = explanations?.[m.key];
         return (
           <div key={m.key} className="space-y-1">
             <div className="flex justify-between text-sm">
@@ -28,6 +33,9 @@ export const ScoreBreakdown = ({ breakdown }: ScoreBreakdownProps) => (
                 style={{ width: `${pct}%` }}
               />
             </div>
+            {explanation && (
+              <p className="text-xs text-muted-foreground">{explanation}</p>
+            )}
           </div>
         );
       })}

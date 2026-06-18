@@ -9,13 +9,17 @@ interface CompetitorTableProps {
   city: string;
   userName: string;
   userScore: number;
+  competitorQuery?: string;
 }
 
-export const CompetitorTable = ({ competitors, city, userName, userScore }: CompetitorTableProps) => {
+export const CompetitorTable = ({ competitors, city, userName, userScore, competitorQuery }: CompetitorTableProps) => {
   if (!competitors || competitors.length === 0) {
     return (
       <div className="bg-card border border-border rounded-xl p-6 space-y-2">
         <h3 className="text-xl font-bold text-foreground">How You Compare in {city}</h3>
+        {competitorQuery && (
+          <p className="text-xs text-muted-foreground font-mono">Search used: "{competitorQuery}"</p>
+        )}
         <p className="text-muted-foreground text-sm">
           No direct competitors found in your city — you have a first-mover advantage. Use it.
         </p>
@@ -28,6 +32,11 @@ export const CompetitorTable = ({ competitors, city, userName, userScore }: Comp
       <div>
         <h3 className="text-xl font-bold text-foreground">How You Compare in {city}</h3>
         <p className="text-sm text-muted-foreground">We found professionals in your field to benchmark against</p>
+        {competitorQuery && (
+          <p className="text-xs text-muted-foreground font-mono mt-1">
+            Search used: "{competitorQuery}"
+          </p>
+        )}
       </div>
 
       <div className="overflow-x-auto">

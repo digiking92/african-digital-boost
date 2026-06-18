@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ScoreHero } from "@/components/results/ScoreHero";
 import { ScoreBreakdown } from "@/components/results/ScoreBreakdown";
+import { AuditTransparency } from "@/components/results/AuditTransparency";
+import { VerifiedFindings, type VerifiedFinding } from "@/components/results/VerifiedFindings";
 import { GooglePositioning } from "@/components/results/GooglePositioning";
 import { SocialFootprint, type SocialProfile } from "@/components/results/SocialFootprint";
 import { PositioningSummary } from "@/components/results/PositioningSummary";
@@ -16,6 +18,7 @@ import { Testimonials } from "@/components/results/Testimonials";
 import { ReauditCapture } from "@/components/results/ReauditCapture";
 import type { Tables, Json } from "@/integrations/supabase/types";
 import type { GoogleResult } from "@/components/results/GooglePositioning";
+import type { QueryRun } from "@/components/results/AuditTransparency";
 
 function parseJsonField<T>(value: Json | null | undefined, fallback: T): T {
   if (value == null) return fallback;
@@ -34,13 +37,23 @@ interface RawSearchData {
   nameResults?: GoogleResult[];
   compResults?: GoogleResult[];
   socialProfiles?: SocialProfile[];
+  auditMeta?: {
+    searchedAt?: string;
+    queriesRun?: QueryRun[];
+    competitorQuery?: string;
+    breakdownExplanations?: Record<string, string>;
+  };
 }
 
 interface PositioningData {
-  diagnosis_summary?: string;
-  ai_visibility_summary?: string;
+  verified_findings?: VerifiedFinding[];
+  sourced_claims?: Array<{ claim: string; source: string }>;
+  interpretation_summary?: string;
+  discovery_estimate?: string;
   biggest_quick_win?: string;
   upsell_hook?: string;
+  diagnosis_summary?: string;
+  ai_visibility_summary?: string;
 }
 
 const Results = () => {
@@ -96,9 +109,12 @@ const Results = () => {
     first_5_posts: [],
   });
   const rawSearch = parseJsonField<RawSearchData>(audit.raw_search_results, {});
+  const auditMeta = rawSearch.auditMeta ?? {};
   const googleResults = rawSearch.googleResults ?? rawSearch.nameResults ?? [];
   const socialProfiles = rawSearch.socialProfiles ?? [];
   const positioning = contentBlueprint.positioning ?? {};
+  const verifiedFindings = positioning.verified_findings ?? [];
+  const primaryQuery = auditMeta.queriesRun?.find((q) => q.type === "name")?.query;
 
   const searchMayHaveFailed = audit.score === 0
     && Object.values(breakdown).every((value) => value === 0)
@@ -115,15 +131,39 @@ const Results = () => {
           </div>
         )}
         <ScoreHero firstName={firstName} score={audit.score} tier={audit.tier} />
+        <AuditTransparency
+          searchedAt={auditMeta.searchedAt}
+          queriesRun={auditMeta.queriesRun}
+          competitorQuery={auditMeta.competitorQuery}
+          city={audit.city}
+          country={audit.country}
+        />
+        <VerifiedFindings findings={verifiedFindings} />
+        <GooglePositioning
+          results={googleResults}
+          fullName={audit.full_name}
+          primaryQuery={primaryQuery}
+        />
+        <SocialFootprint profiles={socialProfiles} />
+        <ScoreBreakdown
+          breakdown={breakdown}
+          explanations={auditMeta.breakdownExplanations}
+        />
+        <CompetitorTable
+          competitors={competitors}
+          city={audit.city}
+          userName={audit.full_name}
+          userScore={audit.score}
+          competitorQuery={auditMeta.competitorQuery}
+        />
         <PositioningSummary
+          interpretationSummary={positioning.interpretation_summary}
+          discoveryEstimate={positioning.discovery_estimate}
+          biggestQuickWin={positioning.biggest_quick_win}
+          sourcedClaims={positioning.sourced_claims}
           diagnosisSummary={positioning.diagnosis_summary}
           aiVisibilitySummary={positioning.ai_visibility_summary}
-          biggestQuickWin={positioning.biggest_quick_win}
         />
-        <GooglePositioning results={googleResults} fullName={audit.full_name} />
-        <SocialFootprint profiles={socialProfiles} />
-        <ScoreBreakdown breakdown={breakdown} />
-        <CompetitorTable competitors={competitors} city={audit.city} userName={audit.full_name} userScore={audit.score} />
         <ShareCard score={audit.score} tier={audit.tier} name={audit.full_name} shareUrl={shareUrl} />
 
         <div id="plan" />
