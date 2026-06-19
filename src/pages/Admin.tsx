@@ -11,8 +11,6 @@ import {
   verifyAdminPassword,
 } from "@/lib/adminApi";
 
-const ADMIN_SESSION_KEY = "auditme-admin-password";
-
 const STATUS_OPTIONS: { value: FollowUpStatus; label: string }[] = [
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
@@ -41,7 +39,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 }
 
 const Admin = () => {
-  const [password, setPassword] = useState(() => sessionStorage.getItem(ADMIN_SESSION_KEY) || "");
+  const [password, setPassword] = useState("");
   const [loginInput, setLoginInput] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,7 +55,6 @@ const Admin = () => {
       setLeads(data.leads);
       setStats(data.stats);
     } catch (err) {
-      sessionStorage.removeItem(ADMIN_SESSION_KEY);
       setPassword("");
       throw err;
     } finally {
@@ -78,7 +75,6 @@ const Admin = () => {
     setLoading(true);
     try {
       await verifyAdminPassword(loginInput);
-      sessionStorage.setItem(ADMIN_SESSION_KEY, loginInput);
       setPassword(loginInput);
       setLoginInput("");
     } catch {
@@ -89,7 +85,6 @@ const Admin = () => {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
     setPassword("");
     setLeads([]);
     setStats(null);

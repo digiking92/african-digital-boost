@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { sanitizeExternalUrl } from "@/lib/safeUrl";
 
 /** Shared audit report UI: navy + green only, high contrast. */
 export const AuditSection = ({
@@ -84,13 +85,19 @@ export const AuditInnerCard = ({
   </div>
 );
 
-export const AuditLink = ({ href, children }: { href: string; children: ReactNode }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-sm text-[#4ADE80] font-medium hover:underline underline-offset-2 break-all"
-  >
-    {children}
-  </a>
-);
+export const AuditLink = ({ href, children }: { href: string; children: ReactNode }) => {
+  const safeHref = sanitizeExternalUrl(href);
+  if (!safeHref) {
+    return <span className="text-sm text-white/55 break-all">{children}</span>;
+  }
+  return (
+    <a
+      href={safeHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm text-[#4ADE80] font-medium hover:underline underline-offset-2 break-all"
+    >
+      {children}
+    </a>
+  );
+};

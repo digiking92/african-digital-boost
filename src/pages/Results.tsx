@@ -65,6 +65,10 @@ const Results = () => {
 
   useEffect(() => {
     if (!shareToken) { navigate("/"); return; }
+    if (!/^[a-z0-9]{10,24}$/.test(shareToken)) {
+      navigate("/");
+      return;
+    }
 
     const fetchAudit = async () => {
       const { data, error } = await supabase

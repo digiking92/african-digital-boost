@@ -1,29 +1,74 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeadersFor } from "../_shared/cors.ts";
 
 const VALID_STATUSES = new Set(["new", "contacted", "interested", "booked", "closed", "no_response"]);
 
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+const loginAttempts = new Map<string, { count: number; resetAt: number; lockedUntil: number }>();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+const LOGIN_LOCK_MS = 30 * 60 * 1000;
+
+function getClientIp(req: Request): string {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  return forwardedFor?.split(",").at(-1)?.trim() || "unknown";
+}
+
+function isLoginLocked(ip: string): boolean {
+  const entry = loginAttempts.get(ip);
+  return !!entry && Date.now() < entry.lockedUntil;
+}
+
+function recordFailedLogin(ip: string) {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS, lockedUntil: 0 });
+    return;
+  }
+  entry.count += 1;
+  if (entry.count >= LOGIN_MAX_ATTEMPTS) {
+    entry.lockedUntil = now + LOGIN_LOCK_MS;
+  }
+}
+
+function clearLoginAttempts(ip: string) {
+  loginAttempts.delete(ip);
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    diff |= aBytes[i] ^ bBytes[i];
+  }
+  return diff === 0;
 }
 
 function verifyPassword(provided: string, expected: string | undefined): boolean {
   if (!expected || !provided) return false;
-  return provided === expected;
+  return timingSafeEqual(provided, expected);
 }
 
 serve(async (req) => {
+  const cors = corsHeadersFor(req);
+
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
+  }
+
+  const clientIp = getClientIp(req);
+  if (isLoginLocked(clientIp)) {
+    return json({ error: "Too many failed login attempts. Try again later." }, 429);
   }
 
   try {
@@ -39,8 +84,11 @@ serve(async (req) => {
     const password = String(body.password || "");
 
     if (!verifyPassword(password, ADMIN_DASHBOARD_PASSWORD)) {
+      recordFailedLogin(clientIp);
       return json({ error: "Invalid password." }, 401);
     }
+
+    clearLoginAttempts(clientIp);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const action = String(body.action || "list");

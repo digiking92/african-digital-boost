@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeadersFor } from "../_shared/cors.ts";
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 3;
@@ -74,7 +69,7 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-function generateToken(length = 10): string {
+function generateToken(length = 16): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
   const arr = new Uint8Array(length);
@@ -761,6 +756,21 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+/** Collapse Gmail/Yahoo aliases so +tag and dot tricks cannot bypass rate limits. */
+function canonicalEmail(email: string): string {
+  const parsed = parseEmailParts(normalizeEmail(email));
+  if (!parsed) return normalizeEmail(email);
+
+  let { local, domain } = parsed;
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") {
+    local = local.split("+")[0].replace(/\./g, "");
+  } else if (domain === "ymail.com" || domain === "rocketmail.com" || domain.startsWith("yahoo.")) {
+    local = local.split("+")[0];
+  }
+  return `${local}@${domain}`;
+}
+
 const SUSPICIOUS_LOCAL_PARTS = new Set([
   "test", "fake", "spam", "noreply", "no-reply", "admin", "asdf", "qwerty",
   "abc", "null", "undefined", "example", "user", "email",
@@ -826,6 +836,15 @@ function parseFromAddress(fromEmail: string, fromName: string): { address: strin
   return { address: fromEmail.trim(), name: fromName };
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 async function sendAuditReportEmail(params: {
   zeptoApiKey: string;
   fromEmail: string;
@@ -837,28 +856,31 @@ async function sendAuditReportEmail(params: {
   reportUrl: string;
 }): Promise<boolean> {
   const { zeptoApiKey, fromEmail, fromName, toEmail, firstName, score, tier, reportUrl } = params;
+  const safeFirst = escapeHtml(firstName);
+  const safeTier = escapeHtml(tier);
+  const safeReportUrl = escapeHtml(reportUrl);
   const subject = `${firstName}, your AuditME score is ${score}/100 (${tier})`;
   const from = parseFromAddress(fromEmail, fromName);
 
   const htmlbody = `
     <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;background:#0D1B2A;color:#ffffff;padding:32px;border-radius:12px;">
       <p style="color:#4ADE80;font-weight:700;font-size:14px;margin:0 0 8px;">AuditME</p>
-      <h1 style="margin:0 0 16px;font-size:24px;">Hi ${firstName}, your Google presence report is ready</h1>
+      <h1 style="margin:0 0 16px;font-size:24px;">Hi ${safeFirst}, your Google presence report is ready</h1>
       <p style="color:rgba(255,255,255,0.85);line-height:1.6;">
         You scored <strong style="color:#4ADE80;">${score}/100</strong> and you're currently rated as a
-        <strong style="color:#4ADE80;">${tier}</strong> online.
+        <strong style="color:#4ADE80;">${safeTier}</strong> online.
       </p>
       <p style="color:rgba(255,255,255,0.85);line-height:1.6;">
         Your full report includes your score breakdown, named competitors, and a personalised action plan.
       </p>
       <p style="margin:28px 0;">
-        <a href="${reportUrl}" style="background:#4ADE80;color:#0D1B2A;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px;display:inline-block;">
+        <a href="${safeReportUrl}" style="background:#4ADE80;color:#0D1B2A;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px;display:inline-block;">
           View my full report
         </a>
       </p>
       <p style="color:rgba(255,255,255,0.55);font-size:12px;line-height:1.5;">
         If the button doesn't work, copy this link:<br/>
-        <a href="${reportUrl}" style="color:#4ADE80;">${reportUrl}</a>
+        <a href="${safeReportUrl}" style="color:#4ADE80;">${safeReportUrl}</a>
       </p>
     </div>
   `;
@@ -912,8 +934,10 @@ function polishSourcedClaim(claim: string, firstName: string, fullName: string):
 }
 
 serve(async (req) => {
+  const cors = corsHeadersFor(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   const forwardedFor = req.headers.get("x-forwarded-for");
@@ -921,7 +945,7 @@ serve(async (req) => {
   if (!checkRateLimit(ip)) {
     return new Response(JSON.stringify({ error: "Too many requests. Please wait a minute before trying again." }), {
       status: 429,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 
@@ -954,14 +978,14 @@ serve(async (req) => {
     if (honeypot) {
       return new Response(JSON.stringify({ error: "Unable to process your request." }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     if (!full_name || !email || !profession || !country || !city) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -969,25 +993,26 @@ serve(async (req) => {
     if (emailError) {
       return new Response(JSON.stringify({ error: emailError }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count: recentAuditCount, error: rateLimitError } = await supabase
+    const emailKey = canonicalEmail(email);
+    const { data: recentEmails, error: rateLimitError } = await supabase
       .from("audits")
-      .select("id", { count: "exact", head: true })
-      .eq("email", email)
-      .gte("created_at", oneDayAgo);
+      .select("email")
+      .gte("created_at", oneDayAgo)
+      .limit(500);
 
     if (rateLimitError) {
       console.error("Rate limit check error:", rateLimitError);
-    } else if ((recentAuditCount ?? 0) >= 1) {
+    } else if (recentEmails?.some((row) => canonicalEmail(String(row.email || "")) === emailKey)) {
       return new Response(JSON.stringify({
         error: "You already ran an audit in the last 24 hours. Check your inbox for your report link.",
       }), {
         status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -1338,7 +1363,7 @@ Return JSON:
         content_blueprint: aiPlan.content_blueprint,
         positioning,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { headers: { ...cors, "Content-Type": "application/json" } },
     );
   } catch (error: unknown) {
     console.error("run-audit error:", error);
@@ -1355,7 +1380,7 @@ Return JSON:
       : "Something went wrong. Please try again later.";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });

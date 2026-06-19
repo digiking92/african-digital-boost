@@ -2,3 +2,6 @@ project_id = "azsubeqomrvigujzhpyf"
 
 [functions.run-audit]
 verify_jwt = false
+
+[functions.admin-dashboard]
+verify_jwt = true
