@@ -757,14 +757,65 @@ function replaceLongDashes(text: string): string {
     .trim();
 }
 
-function isValidEmail(email: string): boolean {
-  const trimmed = email.trim();
-  if (!trimmed || trimmed.length > 254) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed);
-}
-
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+const SUSPICIOUS_LOCAL_PARTS = new Set([
+  "test", "fake", "spam", "noreply", "no-reply", "admin", "asdf", "qwerty",
+  "abc", "null", "undefined", "example", "user", "email",
+]);
+
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com", "guerrillamail.com", "tempmail.com", "10minutemail.com",
+  "throwaway.email", "yopmail.com", "sharklasers.com", "trashmail.com",
+]);
+
+function parseEmailParts(email: string): { local: string; domain: string } | null {
+  const trimmed = email.trim();
+  if (!trimmed || trimmed.length > 254) return null;
+  const match = trimmed.match(/^([^\s@]+)@([^\s@]+\.[^\s@]{2,})$/);
+  if (!match) return null;
+  return { local: match[1].toLowerCase(), domain: match[2].toLowerCase() };
+}
+
+function isAllowedEmailProvider(domain: string): boolean {
+  const d = domain.toLowerCase();
+  if (d === "gmail.com" || d === "googlemail.com") return true;
+  if (d === "ymail.com" || d === "rocketmail.com") return true;
+  if (d === "yahoo.com" || d.startsWith("yahoo.")) return true;
+  return false;
+}
+
+function hasSuspiciousLocalPart(local: string): boolean {
+  if (local.length < 2) return true;
+  if (/^\d+$/.test(local)) return true;
+  if (/^(.)\1{4,}$/.test(local)) return true;
+  const base = local.split("+")[0];
+  if (SUSPICIOUS_LOCAL_PARTS.has(base)) return true;
+  if (/^(test|fake|spam|temp|demo|null)\d*$/i.test(base)) return true;
+  return false;
+}
+
+function validateAuditEmail(email: string): string | null {
+  const parsed = parseEmailParts(email);
+  if (!parsed) return "Please enter a valid email address.";
+
+  const { local, domain } = parsed;
+
+  if (DISPOSABLE_DOMAINS.has(domain)) {
+    return "Disposable email addresses are not allowed.";
+  }
+
+  if (!isAllowedEmailProvider(domain)) {
+    return "Please use a Gmail or Yahoo email address (e.g. you@gmail.com or you@yahoo.com).";
+  }
+
+  if (hasSuspiciousLocalPart(local)) {
+    return "Please use your real email address.";
+  }
+
+  return null;
 }
 
 function parseFromAddress(fromEmail: string, fromName: string): { address: string; name: string } {
@@ -895,9 +946,17 @@ serve(async (req) => {
 
     const full_name = String(body.full_name || "").trim().slice(0, 100);
     const email = normalizeEmail(String(body.email || ""));
+    const honeypot = String(body._hp_website || "").trim();
     const profession = String(body.profession || "").trim().slice(0, 100);
     const country = String(body.country || "").trim().slice(0, 100);
     const city = String(body.city || "").trim().slice(0, 100);
+
+    if (honeypot) {
+      return new Response(JSON.stringify({ error: "Unable to process your request." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!full_name || !email || !profession || !country || !city) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -906,9 +965,28 @@ serve(async (req) => {
       });
     }
 
-    if (!isValidEmail(email)) {
-      return new Response(JSON.stringify({ error: "Please enter a valid email address." }), {
+    const emailError = validateAuditEmail(email);
+    if (emailError) {
+      return new Response(JSON.stringify({ error: emailError }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: recentAuditCount, error: rateLimitError } = await supabase
+      .from("audits")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email)
+      .gte("created_at", oneDayAgo);
+
+    if (rateLimitError) {
+      console.error("Rate limit check error:", rateLimitError);
+    } else if ((recentAuditCount ?? 0) >= 1) {
+      return new Response(JSON.stringify({
+        error: "You already ran an audit in the last 24 hours. Check your inbox for your report link.",
+      }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

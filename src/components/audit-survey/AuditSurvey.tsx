@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SurveyProgress } from "./SurveyProgress";
-import { isValidEmail } from "@/lib/emailValidation";
+import { isValidEmail, validateAuditEmail } from "@/lib/emailValidation";
 
 const professions = [
   "Business Coach", "Life Coach", "Lawyer", "Doctor", "Consultant",
@@ -55,6 +55,8 @@ type FormData = {
   tiktok_handle: string;
   x_handle: string;
   linkedin_handle: string;
+  /** Honeypot — must stay empty; bots fill this in. */
+  _hp_website: string;
 };
 
 const emptyForm: FormData = {
@@ -68,6 +70,7 @@ const emptyForm: FormData = {
   tiktok_handle: "",
   x_handle: "",
   linkedin_handle: "",
+  _hp_website: "",
 };
 
 const SurveyCta = ({
@@ -114,9 +117,12 @@ export const AuditSurvey = () => {
   ][step];
 
   const goNext = () => {
-    if (step === 1 && !isValidEmail(formData.email)) {
-      setEmailError("Please enter a valid email address.");
-      return;
+    if (step === 1) {
+      const err = validateAuditEmail(formData.email);
+      if (err) {
+        setEmailError(err);
+        return;
+      }
     }
     setEmailError("");
     if (!canAdvance) return;
@@ -235,7 +241,7 @@ export const AuditSurvey = () => {
               <Input
                 autoFocus
                 type="email"
-                placeholder="Please enter your email address"
+                placeholder="you@gmail.com or you@yahoo.com"
                 maxLength={254}
                 value={formData.email}
                 onChange={(e) => {
@@ -244,11 +250,21 @@ export const AuditSurvey = () => {
                 }}
                 className="max-w-md mx-auto h-14 text-base audit-input text-center"
               />
+              <input
+                type="text"
+                name="_hp_website"
+                value={formData._hp_website}
+                onChange={(e) => set({ _hp_website: e.target.value })}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute left-[-9999px] h-0 w-0 opacity-0 pointer-events-none"
+              />
               {emailError && (
                 <p className="text-sm text-red-400">{emailError}</p>
               )}
               <p className="text-xs text-white/50 max-w-sm mx-auto">
-                No spam. One report email now, plus optional follow-ups to help you improve your score.
+                Gmail or Yahoo only. No spam — one report email now, plus optional follow-ups to help you improve your score.
               </p>
             </>
           )}
