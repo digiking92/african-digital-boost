@@ -14,8 +14,32 @@ const professions = [
 ];
 
 const countries = [
-  "Nigeria", "Kenya", "Ghana", "South Africa", "Egypt", "Ethiopia",
-  "Tanzania", "Uganda", "Rwanda", "Senegal", "Other African Country",
+  "Algeria",
+  "Angola",
+  "Benin",
+  "Botswana",
+  "Burkina Faso",
+  "Cameroon",
+  "Côte d'Ivoire",
+  "Egypt",
+  "Ethiopia",
+  "Ghana",
+  "Kenya",
+  "Mauritius",
+  "Morocco",
+  "Mozambique",
+  "Namibia",
+  "Nigeria",
+  "Rwanda",
+  "Senegal",
+  "South Africa",
+  "Tanzania",
+  "Tunisia",
+  "Uganda",
+  "Zambia",
+  "Zimbabwe",
+  "Other African Country",
+  "Outside Africa",
 ];
 
 const TOTAL_STEPS = 7;
@@ -245,7 +269,7 @@ export const AuditSurvey = () => {
                 <SelectTrigger className="max-w-md mx-auto h-14 text-base audit-input">
                   <SelectValue placeholder="Select your profession" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#152536] border-[#4ADE80]/25 text-white">
+                <SelectContent className="bg-[#152536] border-[#4ADE80]/25 text-white max-h-60">
                   {professions.map((p) => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
@@ -267,7 +291,7 @@ export const AuditSurvey = () => {
                 <SelectTrigger className="max-w-md mx-auto h-14 text-base audit-input">
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#152536] border-[#4ADE80]/25 text-white">
+                <SelectContent className="bg-[#152536] border-[#4ADE80]/25 text-white max-h-60">
                   {countries.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}

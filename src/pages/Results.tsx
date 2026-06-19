@@ -14,7 +14,6 @@ import { ActionPlan } from "@/components/results/ActionPlan";
 import { ContentBlueprint } from "@/components/results/ContentBlueprint";
 import { EffortCallout } from "@/components/results/EffortCallout";
 import { UpsellOffers } from "@/components/results/UpsellOffers";
-import { Testimonials } from "@/components/results/Testimonials";
 import { ReauditCapture } from "@/components/results/ReauditCapture";
 import type { Tables, Json } from "@/integrations/supabase/types";
 import type { GoogleResult } from "@/components/results/GooglePositioning";
@@ -211,7 +210,6 @@ const Results = () => {
         )}
         <EffortCallout />
         <UpsellOffers upsellHook={positioning.upsell_hook} quickWin={positioning.biggest_quick_win} />
-        <Testimonials />
         <ReauditCapture existingEmail={audit.email} />
       </div>
     </PageShell>

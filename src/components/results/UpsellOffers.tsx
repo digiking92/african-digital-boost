@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { AuditInnerCard, AuditSection, AuditSubtitle, AuditTitle } from "@/components/ui/audit-ui";
+import { AuditSection, AuditSubtitle, AuditTitle } from "@/components/ui/audit-ui";
+import { openCalendlyBooking } from "@/lib/calendly";
 
 interface UpsellOffersProps {
   upsellHook?: string;
@@ -43,7 +44,11 @@ export const UpsellOffers = ({ upsellHook, quickWin }: UpsellOffersProps) => (
             </li>
           ))}
         </ul>
-        <Button className="w-full brand-cta text-base py-5">
+        <Button
+          type="button"
+          onClick={openCalendlyBooking}
+          className="w-full brand-cta text-base py-5"
+        >
           Book a Free 15-Min Strategy Call
         </Button>
       </AuditSection>
@@ -70,7 +75,9 @@ export const UpsellOffers = ({ upsellHook, quickWin }: UpsellOffersProps) => (
           ))}
         </ul>
         <Button
+          type="button"
           variant="outline"
+          onClick={openCalendlyBooking}
           className="w-full border-[#4ADE80]/40 text-[#4ADE80] hover:bg-[#4ADE80]/10 bg-transparent text-base font-medium py-5"
         >
           Book Your Strategy Session
